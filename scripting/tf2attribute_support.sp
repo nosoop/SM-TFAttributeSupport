@@ -14,7 +14,7 @@
 
 #include <tf2attributes>
 
-#define PLUGIN_VERSION "1.0.0"
+#define PLUGIN_VERSION "1.0.1"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -25,6 +25,7 @@ public Plugin myinfo = {
 
 Handle g_DHookBaseEntityGetDamage;
 Handle g_DHookGrenadeGetDamageRadius;
+Handle g_DHookWeaponGetProjectileSpeed;
 
 public void OnPluginStart() {
 	Handle hGameConf = LoadGameConfigFile("tf2.attribute_support");
@@ -37,10 +38,26 @@ public void OnPluginStart() {
 	g_DHookGrenadeGetDamageRadius = DHookCreateFromConf(hGameConf,
 			"CBaseGrenade::GetDamageRadius()");
 	
+	g_DHookWeaponGetProjectileSpeed = DHookCreateFromConf(hGameConf,
+			"CTFWeaponBaseGun::GetProjectileSpeed()");
+	
 	delete hGameConf;
 }
 
+public void OnMapStart() {
+	int entity = -1;
+	while ((entity = FindEntityByClassname(entity, "*")) != -1) {
+		if (IsWeaponBaseGun(entity)) {
+			HookWeaponBaseGun(entity);
+		}
+	}
+}
+
 public void OnEntityCreated(int entity, const char[] className) {
+	if (!IsValidEdict(entity)) {
+		return;
+	}
+	
 	if (StrEqual(className, "tf_projectile_energy_ring")) {
 		RequestFrame(EnergyRingPostSpawnPost, EntIndexToEntRef(entity));
 		
@@ -53,6 +70,15 @@ public void OnEntityCreated(int entity, const char[] className) {
 		DHookEntity(g_DHookGrenadeGetDamageRadius, true, entity,
 				.callback = OnGetGrenadeDamageRadiusPost);
 	}
+	
+	if (IsWeaponBaseGun(entity)) {
+		HookWeaponBaseGun(entity);
+	}
+}
+
+static void HookWeaponBaseGun(int entity) {
+	DHookEntity(g_DHookWeaponGetProjectileSpeed, true, entity,
+				.callback = OnGetProjectileSpeedPost);
 }
 
 /**
@@ -105,4 +131,41 @@ public MRESReturn OnGetGrenadeDamageRadiusPost(int grenade, Handle hReturn) {
 	
 	DHookSetReturn(hReturn, TF2Attrib_HookValueFloat(radius, "mult_explosion_radius", weapon));
 	return MRES_Supercede;
+}
+
+/**
+ * Patches unsupported weapons' projectile speed getters based on "override projectile type"
+ */
+public MRESReturn OnGetProjectileSpeedPost(int weapon, Handle hReturn) {
+	float speed = DHookGetReturn(hReturn);
+	
+	// TODO how should we deal with items that already have a speed?
+	
+	switch (TF2Attrib_HookValueInt(0, "override_projectile_type", weapon)) {
+		case 3: {
+			// CTFGrenadeLauncher::GetProjectileSpeed()
+			speed = TF2Attrib_HookValueFloat(1200.0, "mult_projectile_speed", weapon);
+		}
+		case 12: {
+			// CTFParticleCannon::GetProjectileSpeed()
+			speed = 1100.0;
+		}
+		case 13: {
+			// CTFRaygun::GetProjectileSpeed()
+			speed = 1200.0;
+		}
+	}
+	
+	if (speed) {
+		DHookSetReturn(hReturn, speed);
+		return MRES_Supercede;
+	}
+	return MRES_Ignored;
+}
+
+/**
+ * Kludge to detect CTFWeaponBaseGun-derived entities.
+ */
+static bool IsWeaponBaseGun(int entity) {
+	return HasEntProp(entity, Prop_Data, "CTFWeaponBaseGunZoomOutIn");
 }

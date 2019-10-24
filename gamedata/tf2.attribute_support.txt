@@ -18,6 +18,13 @@
 				"return"		"float"
 				"this"			"entity"
 			}
+			"CTFWeaponBaseGun::GetProjectileSpeed()"
+			{
+				"offset"		"CTFWeaponBaseGun::GetProjectileSpeed()"
+				"callconv"		"thiscall"
+				"return"		"float"
+				"this"			"entity"
+			}
 		}
 		"Offsets"
 		{
@@ -31,8 +38,11 @@
 				"windows"	"234"
 				"linux"		"235"
 			}
+			"CTFWeaponBaseGun::GetProjectileSpeed()"
+			{
+				"windows"	"473"
+				"linux"		"480"
+			}
 		}
 	}
 }
-
-
