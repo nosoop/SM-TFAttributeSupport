@@ -14,7 +14,7 @@
 
 #include <tf2attributes>
 
-#define PLUGIN_VERSION "1.0.1"
+#define PLUGIN_VERSION "1.0.2"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -26,6 +26,28 @@ public Plugin myinfo = {
 Handle g_DHookBaseEntityGetDamage;
 Handle g_DHookGrenadeGetDamageRadius;
 Handle g_DHookWeaponGetProjectileSpeed;
+
+enum eTFProjectileOverride {
+	Projectile_Bullet = 1,
+	Projectile_Rocket = 2,
+	Projectile_Pipebomb = 3,
+	Projectile_Stickybomb = 4,
+	Projectile_Syringe = 5,
+	Projectile_Flare = 6,
+	Projectile_Arrow = 8,
+	Projectile_CrossbowBolt = 11,
+	Projectile_EnergyBall = 12,
+	Projectile_EnergyRing = 13,
+	Projectile_TrainingSticky = 14,
+	Projectile_Cannonball = 17,
+	Projectile_RescueClaw = 18,
+	Projectile_ArrowFestive = 19,
+	Projectile_JarFestive = 22,
+	Projectile_CrossbowBoltFestive = 23,
+	Projectile_JarBread = 24,
+	Projectile_JarMilkBread = 25,
+	Projectile_GrapplingHook = 26,
+}
 
 public void OnPluginStart() {
 	Handle hGameConf = LoadGameConfigFile("tf2.attribute_support");
@@ -142,17 +164,32 @@ public MRESReturn OnGetProjectileSpeedPost(int weapon, Handle hReturn) {
 	// TODO how should we deal with items that already have a speed?
 	
 	switch (TF2Attrib_HookValueInt(0, "override_projectile_type", weapon)) {
-		case 3: {
+		case Projectile_Pipebomb, Projectile_Cannonball: {
 			// CTFGrenadeLauncher::GetProjectileSpeed()
 			speed = TF2Attrib_HookValueFloat(1200.0, "mult_projectile_speed", weapon);
 		}
-		case 12: {
+		case Projectile_Arrow, Projectile_ArrowFestive: {
+			// CTFCompoundBow::GetProjectileSpeed()
+			// 1800 + (charge * 800);
+			speed = 2600.0;
+		}
+		case Projectile_CrossbowBolt, Projectile_CrossbowBoltFestive, Projectile_RescueClaw: {
+			// CTFCrossbow::GetProjectileSpeed()
+			// same as Projectile_Arrow but charge = 0.75
+			speed = 2400.0;
+		}
+		case Projectile_EnergyBall: {
 			// CTFParticleCannon::GetProjectileSpeed()
 			speed = 1100.0;
 		}
-		case 13: {
+		case Projectile_EnergyRing: {
 			// CTFRaygun::GetProjectileSpeed()
 			speed = 1200.0;
+		}
+		case Projectile_GrapplingHook: {
+			// CTFGrapplingHook::GetProjectileSpeed()
+			// doesn't include CTFPlayerShared::GetCarryingRuneType() checks
+			speed = FindConVar("tf_grapplinghook_projectile_speed").FloatValue;
 		}
 	}
 	
