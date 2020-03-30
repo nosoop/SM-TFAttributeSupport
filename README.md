@@ -16,4 +16,7 @@ correct speed.
 Requires my personal fork of [TF2Attributes][], which exposes the game's attribute value hooks
 as native functions for plugins to use.
 
+This also needs the [detour-supporting version of DHooks][dynhooks].
+
 [TF2Attributes]: https://github.com/nosoop/tf2attributes
+[dynhooks]: https://forums.alliedmods.net/showpost.php?p=2588686&postcount=589
