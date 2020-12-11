@@ -14,7 +14,7 @@
 
 #include <tf2attributes>
 
-#define PLUGIN_VERSION "1.0.2"
+#define PLUGIN_VERSION "1.1.0"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -26,6 +26,10 @@ public Plugin myinfo = {
 Handle g_DHookBaseEntityGetDamage;
 Handle g_DHookGrenadeGetDamageRadius;
 Handle g_DHookWeaponGetProjectileSpeed;
+Handle g_DHookFireJar;
+
+Handle g_SDKCallGetPlayerShootPosition;
+Handle g_SDKCallInitGrenade;
 
 enum eTFProjectileOverride {
 	Projectile_Bullet = 1,
@@ -34,19 +38,27 @@ enum eTFProjectileOverride {
 	Projectile_Stickybomb = 4,
 	Projectile_Syringe = 5,
 	Projectile_Flare = 6,
+	Projectile_Jar = 7,
 	Projectile_Arrow = 8,
+	Projectile_FlameRocket = 9, // late addition?
+	Projectile_JarMilk = 10,
 	Projectile_CrossbowBolt = 11,
 	Projectile_EnergyBall = 12,
 	Projectile_EnergyRing = 13,
 	Projectile_TrainingSticky = 14,
+	Projectile_Cleaver = 15,
+	// 16 is not referecned in ::FireProjectile
 	Projectile_Cannonball = 17,
 	Projectile_RescueClaw = 18,
 	Projectile_ArrowFestive = 19,
+	Projectile_Spellbook = 20,
+	// 21 is not referenced in ::FireProjectile
 	Projectile_JarFestive = 22,
 	Projectile_CrossbowBoltFestive = 23,
 	Projectile_JarBread = 24,
 	Projectile_JarMilkBread = 25,
 	Projectile_GrapplingHook = 26,
+	Projectile_JarGas = 29,
 }
 
 public void OnPluginStart() {
@@ -63,14 +75,37 @@ public void OnPluginStart() {
 	g_DHookWeaponGetProjectileSpeed = DHookCreateFromConf(hGameConf,
 			"CTFWeaponBaseGun::GetProjectileSpeed()");
 	
+	g_DHookFireJar = DHookCreateFromConf(hGameConf, "CTFWeaponBaseGun::FireJar()");
+	
+	StartPrepSDKCall(SDKCall_Player);
+	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual, "CBasePlayer::Weapon_ShootPosition()");
+	PrepSDKCall_SetReturnInfo(SDKType_Vector, SDKPass_ByValue);
+	g_SDKCallGetPlayerShootPosition = EndPrepSDKCall();
+	
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
+			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
+	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_AddParameter(SDKType_Float, SDKPass_Plain);
+	g_SDKCallInitGrenade = EndPrepSDKCall();
+	
 	delete hGameConf;
 }
 
 public void OnMapStart() {
 	int entity = -1;
 	while ((entity = FindEntityByClassname(entity, "*")) != -1) {
+		if (!IsValidEdict(entity)) {
+			continue;
+		}
+		
 		if (IsWeaponBaseGun(entity)) {
-			HookWeaponBaseGun(entity);
+			char className[64];
+			GetEntityClassname(entity, className, sizeof(className));
+			HookWeaponBaseGun(entity, className);
 		}
 	}
 }
@@ -94,13 +129,17 @@ public void OnEntityCreated(int entity, const char[] className) {
 	}
 	
 	if (IsWeaponBaseGun(entity)) {
-		HookWeaponBaseGun(entity);
+		HookWeaponBaseGun(entity, className);
 	}
 }
 
-static void HookWeaponBaseGun(int entity) {
+static void HookWeaponBaseGun(int entity, const char[] className) {
 	DHookEntity(g_DHookWeaponGetProjectileSpeed, true, entity,
-				.callback = OnGetProjectileSpeedPost);
+			.callback = OnGetProjectileSpeedPost);
+	
+	if (strncmp(className, "tf_weapon_jar", strlen("tf_weapon_jar")) != 0) {
+		DHookEntity(g_DHookFireJar, false, entity, .callback = OnFireJarPre);
+	}
 }
 
 /**
@@ -200,9 +239,96 @@ public MRESReturn OnGetProjectileSpeedPost(int weapon, Handle hReturn) {
 	return MRES_Ignored;
 }
 
+public MRESReturn OnFireJarPre(int weapon, Handle hReturn, Handle hParams) {
+	int owner = !DHookIsNullParam(hParams, 1) ?
+			DHookGetParam(hParams, 1) : INVALID_ENT_REFERENCE;
+	if (owner < 1 || owner > MaxClients) {
+		return MRES_Ignored;
+	}
+	
+	char className[64];
+	switch (TF2Attrib_HookValueInt(0, "override_projectile_type", weapon)) {
+		case Projectile_Jar, Projectile_JarBread, Projectile_JarFestive: {
+			className = "tf_projectile_jar";
+		}
+		case Projectile_JarMilk, Projectile_JarMilkBread: {
+			className = "tf_projectile_jar_milk";
+		}
+		case Projectile_Cleaver: {
+			className = "tf_projectile_cleaver";
+		}
+		case Projectile_JarGas: {
+			className = "tf_projectile_jar_gas";
+		}
+		case Projectile_Spellbook: {
+			// not implemented
+			return MRES_Ignored;
+		}
+		default: {
+			return MRES_Ignored;
+		}
+	}
+	if (!className[0]) {
+		return MRES_Ignored;
+	}
+	
+	float vecSpawnOrigin[3];
+	GetPlayerShootPosition(owner, vecSpawnOrigin);
+	
+	float angEyes[3], vecEyeForward[3], vecEyeRight[3], vecEyeUp[3];
+	
+	GetClientEyeAngles(owner, angEyes);
+	GetAngleVectors(angEyes, vecEyeForward, vecEyeRight, vecEyeUp);
+	
+	ScaleVector(vecEyeForward, 16.0);
+	AddVectors(vecSpawnOrigin, vecEyeForward, vecSpawnOrigin);
+	
+	// fire projectile from center
+	if (!TF2Attrib_HookValueInt(0, "centerfire_projectile", weapon)) {
+		ScaleVector(vecEyeRight, 8.0); // TODO check if viewmodels are flipped
+		AddVectors(vecSpawnOrigin, vecEyeRight, vecSpawnOrigin);
+	}
+	
+	ScaleVector(vecEyeUp, -6.0);
+	AddVectors(vecSpawnOrigin, vecEyeUp, vecSpawnOrigin);
+	
+	float vecSpawnAngles[3];
+	GetEntPropVector(owner, Prop_Data, "m_angAbsRotation", vecSpawnAngles);
+	
+	GetAngleVectors(angEyes, vecEyeForward, vecEyeRight, vecEyeUp);
+	
+	float vecVelocity[3];
+	vecVelocity = vecEyeForward;
+	ScaleVector(vecVelocity, 1200.0);
+	ScaleVector(vecEyeUp, 200.0);
+	
+	AddVectors(vecVelocity, vecEyeUp, vecVelocity);
+	
+	int jar = CreateEntityByName(className);
+	DispatchSpawn(jar);
+	TeleportEntity(jar, vecSpawnOrigin, vecSpawnAngles, NULL_VECTOR);
+	
+	float vecAngVelocity[3];
+	vecAngVelocity[0] = 600.0;
+	vecAngVelocity[1] = GetRandomFloat(-1200.0, 1200.0);
+	
+	SDKCall(g_SDKCallInitGrenade, jar, vecVelocity, vecAngVelocity, owner, 0, 3.0);
+	SetEntProp(jar, Prop_Data, "m_bIsLive", true);
+	
+	SetEntPropEnt(jar, Prop_Send, "m_hOriginalLauncher", weapon);
+	SetEntPropEnt(jar, Prop_Send, "m_hThrower", owner);
+	
+	DHookSetReturn(hReturn, false);
+	return MRES_Supercede;
+}
+
 /**
  * Kludge to detect CTFWeaponBaseGun-derived entities.
  */
 static bool IsWeaponBaseGun(int entity) {
 	return HasEntProp(entity, Prop_Data, "CTFWeaponBaseGunZoomOutIn");
+}
+
+void GetPlayerShootPosition(int client, float vecShootPosition[3]) {
+	SDKCall(g_SDKCallGetPlayerShootPosition, client, vecShootPosition);
 }

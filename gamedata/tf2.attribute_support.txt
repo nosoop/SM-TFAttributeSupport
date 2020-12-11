@@ -14,14 +14,28 @@
 			"CBaseGrenade::GetDamageRadius()"
 			{
 				"offset"		"CBaseGrenade::GetDamageRadius()"
-				"callconv"		"thiscall"
+				"hooktype"		"entity"
 				"return"		"float"
 				"this"			"entity"
+			}
+			"CTFWeaponBaseGun::FireJar()"
+			{
+				"offset"		"CTFWeaponBaseGun::FireJar()"
+				"hooktype"		"entity"
+				"return"		"bool"
+				"this"			"entity"
+				"arguments"
+				{
+					"player"
+					{
+						"type"	"cbaseentity"
+					}
+				}
 			}
 			"CTFWeaponBaseGun::GetProjectileSpeed()"
 			{
 				"offset"		"CTFWeaponBaseGun::GetProjectileSpeed()"
-				"callconv"		"thiscall"
+				"hooktype"		"entity"
 				"return"		"float"
 				"this"			"entity"
 			}
@@ -37,6 +51,21 @@
 			{
 				"windows"	"234"
 				"linux"		"235"
+			}
+			"CBasePlayer::Weapon_ShootPosition()"
+			{
+				"windows"	"268"
+				"linux"		"269"
+			}
+			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)"
+			{
+				"windows"	"236"
+				"linux"		"238"
+			}
+			"CTFWeaponBaseGun::FireJar()"
+			{
+				"windows"	"468"
+				"linux"		"475"
 			}
 			"CTFWeaponBaseGun::GetProjectileSpeed()"
 			{
