@@ -4,6 +4,20 @@
 	{
 		"Functions"
 		{
+			"CBaseCombatWeapon::SendWeaponAnim()"
+			{
+				"offset"		"CBaseCombatWeapon::SendWeaponAnim()"
+				"hooktype"		"entity"
+				"return"		"bool"
+				"this"			"entity"
+				"arguments"
+				{
+					"activity"
+					{
+						"type"	"int"
+					}
+				}
+			}
 			"CBaseEntity::GetDamage()"
 			{
 				"offset"		"CBaseEntity::GetDamage()"
@@ -42,6 +56,11 @@
 		}
 		"Offsets"
 		{
+			"CBaseCombatWeapon::SendWeaponAnim()"
+			{
+				"windows"	"242"
+				"linux"		"248"
+			}
 			"CBaseEntity::GetDamage()"
 			{
 				"windows"		"128"

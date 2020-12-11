@@ -10,11 +10,13 @@
 #include <sdktools>
 #include <dhooks>
 
+#include <stocksoup/memory>
+
 #pragma newdecls required
 
 #include <tf2attributes>
 
-#define PLUGIN_VERSION "1.1.0"
+#define PLUGIN_VERSION "1.2.0"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -24,12 +26,19 @@ public Plugin myinfo = {
 }
 
 Handle g_DHookBaseEntityGetDamage;
+Handle g_DHookWeaponSendAnim;
 Handle g_DHookGrenadeGetDamageRadius;
 Handle g_DHookWeaponGetProjectileSpeed;
 Handle g_DHookFireJar;
 
+Handle g_SDKCallBaseWeaponSendAnim;
 Handle g_SDKCallGetPlayerShootPosition;
 Handle g_SDKCallInitGrenade;
+
+int voffs_SendWeaponAnim;
+
+#define TF_ITEMDEF_FORCE_A_NATURE                45
+#define TF_ITEMDEF_FORCE_A_NATURE_FESTIVE        1078
 
 enum eTFProjectileOverride {
 	Projectile_Bullet = 1,
@@ -68,6 +77,10 @@ public void OnPluginStart() {
 	}
 	
 	g_DHookBaseEntityGetDamage = DHookCreateFromConf(hGameConf, "CBaseEntity::GetDamage()");
+	
+	voffs_SendWeaponAnim = GameConfGetOffset(hGameConf, "CBaseCombatWeapon::SendWeaponAnim()");
+	g_DHookWeaponSendAnim = DHookCreateFromConf(hGameConf,
+			"CBaseCombatWeapon::SendWeaponAnim()");
 	
 	g_DHookGrenadeGetDamageRadius = DHookCreateFromConf(hGameConf,
 			"CBaseGrenade::GetDamageRadius()");
@@ -108,6 +121,27 @@ public void OnMapStart() {
 			HookWeaponBaseGun(entity, className);
 		}
 	}
+	
+	// get the address of CTFWeaponBase::SendWeaponAnim() directly
+	if (!g_SDKCallBaseWeaponSendAnim) {
+		int shotgun = CreateEntityByName("tf_weapon_shotgun_primary");
+		
+		Address vmt = DereferencePointer(GetEntityAddress(shotgun));
+		Address pfnBaseWeaponSendAnim = DereferencePointer(
+				vmt + view_as<Address>(4 * voffs_SendWeaponAnim));
+		
+		RemoveEntity(shotgun);
+		
+		StartPrepSDKCall(SDKCall_Entity);
+		PrepSDKCall_SetAddress(pfnBaseWeaponSendAnim);
+		PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
+		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+		g_SDKCallBaseWeaponSendAnim = EndPrepSDKCall();
+		
+		if (!g_SDKCallBaseWeaponSendAnim) {
+			SetFailState("Failed to determine address of CBaseCombatWeapon::SendWeaponAnim()");
+		}
+	}
 }
 
 public void OnEntityCreated(int entity, const char[] className) {
@@ -140,6 +174,11 @@ static void HookWeaponBaseGun(int entity, const char[] className) {
 	if (strncmp(className, "tf_weapon_jar", strlen("tf_weapon_jar")) != 0) {
 		DHookEntity(g_DHookFireJar, false, entity, .callback = OnFireJarPre);
 	}
+	
+	if (StrEqual(className, "tf_weapon_scattergun")
+			|| StrEqual(className, "tf_weapon_soda_popper")) {
+		DHookEntity(g_DHookWeaponSendAnim, false, entity, .callback = OnScattergunSendAnimPre);
+	}
 }
 
 /**
@@ -161,6 +200,29 @@ public void EnergyRingPostSpawnPost(int entref) {
 	
 	ScaleVector(vecVelocity, TF2Attrib_HookValueFloat(1.0, "mult_projectile_speed", weapon));
 	TeleportEntity(entref, NULL_VECTOR, NULL_VECTOR, vecVelocity);
+}
+
+/**
+ * Prevents a Scattergun-based weapon from using Force-a-Nature animations even if it has the
+ * knockback attribute applied, as long as it's not actually a Force-a-Nature.
+ */
+MRESReturn OnScattergunSendAnimPre(int entity, Handle hReturn, Handle hParams) {
+	int activity = DHookGetParam(hParams, 1);
+	
+	if (!TF2Attrib_HookValueInt(0, "set_scattergun_has_knockback", entity)) {
+		return MRES_Ignored;
+	}
+	
+	// dumb hack -- short of using econ data for schema-based markers this will have to do
+	switch (GetEntProp(entity, Prop_Send, "m_iItemDefinitionIndex")) {
+		case TF_ITEMDEF_FORCE_A_NATURE, TF_ITEMDEF_FORCE_A_NATURE_FESTIVE: {
+			return MRES_Ignored;
+		}
+	}
+	
+	// bypass the ITEM2 conversion table and call the baseclass's SendWeaponAnim
+	DHookSetReturn(hReturn, SendWeaponAnim(entity, activity));
+	return MRES_Supercede;
 }
 
 /**
@@ -331,4 +393,8 @@ static bool IsWeaponBaseGun(int entity) {
 
 void GetPlayerShootPosition(int client, float vecShootPosition[3]) {
 	SDKCall(g_SDKCallGetPlayerShootPosition, client, vecShootPosition);
+}
+
+bool SendWeaponAnim(int weapon, int activity) {
+	SDKCall(g_SDKCallBaseWeaponSendAnim, weapon, activity);
 }
