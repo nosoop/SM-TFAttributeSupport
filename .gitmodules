@@ -1,3 +1,6 @@
 [submodule "third_party/tf2attributes"]
 	path = third_party/tf2attributes
 	url = https://github.com/nosoop/tf2attributes
+[submodule "third_party/submodule/stocksoup"]
+	path = third_party/submodule/stocksoup
+	url = https://github.com/nosoop/stocksoup

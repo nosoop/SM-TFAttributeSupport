@@ -13,6 +13,8 @@ copy_files = [
 
 include_dirs = [
 	'third_party/tf2attributes/scripting/include',
+	'third_party/submodule',
+	'third_party/vendored',
 ]
 
 spcomp_min_version = (1, 9)
@@ -34,8 +36,6 @@ parser.add_argument('--spcomp-dir',
 		help = 'Directory with the SourcePawn compiler.  Will check PATH if not specified.')
 
 # we use this because we can't pull down dhooks as a submodule
-parser.add_argument('--dynhooks-incl-dir', help = 'Directory with the DynHooks2 include.')
-
 args = parser.parse_args()
 
 print("""Checking for SourcePawn compiler...""")
@@ -50,9 +50,6 @@ print('Found SourcePawn compiler version', version_string, 'at', os.path.abspath
 if spcomp_min_version > available_version:
 	raise ValueError("Failed to meet required compiler version "
 			+ '.'.join(map(str, spcomp_min_version)))
-
-if args.dynhooks_incl_dir:
-	include_dirs += [ args.dynhooks_incl_dir ]
 
 with contextlib.closing(ninja_syntax.Writer(open('build.ninja', 'wt'))) as build:
 	build.comment('This file is used to build SourceMod plugins with ninja.')
