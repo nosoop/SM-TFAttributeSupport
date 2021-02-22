@@ -29,9 +29,11 @@ Handle g_DHookBaseEntityGetDamage;
 Handle g_DHookWeaponSendAnim;
 Handle g_DHookGrenadeGetDamageRadius;
 Handle g_DHookWeaponGetProjectileSpeed;
+Handle g_DHookWeaponGetInitialAfterburn;
 Handle g_DHookFireJar;
 
 Handle g_SDKCallBaseWeaponSendAnim;
+Handle g_SDKCallIsBaseEntityWeapon;
 Handle g_SDKCallGetPlayerShootPosition;
 Handle g_SDKCallInitGrenade;
 
@@ -85,10 +87,19 @@ public void OnPluginStart() {
 	g_DHookGrenadeGetDamageRadius = DHookCreateFromConf(hGameConf,
 			"CBaseGrenade::GetDamageRadius()");
 	
+	g_DHookWeaponGetInitialAfterburn = DHookCreateFromConf(hGameConf,
+			"CTFWeaponBase::GetInitialAfterburnDuration()");
+	
 	g_DHookWeaponGetProjectileSpeed = DHookCreateFromConf(hGameConf,
 			"CTFWeaponBaseGun::GetProjectileSpeed()");
 	
 	g_DHookFireJar = DHookCreateFromConf(hGameConf, "CTFWeaponBaseGun::FireJar()");
+	
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
+			"CBaseCombatWeapon::IsBaseCombatWeapon()");
+	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
+	g_SDKCallIsBaseEntityWeapon = EndPrepSDKCall();
 	
 	StartPrepSDKCall(SDKCall_Player);
 	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual, "CBasePlayer::Weapon_ShootPosition()");
@@ -115,6 +126,9 @@ public void OnMapStart() {
 			continue;
 		}
 		
+		if (IsEntityWeapon(entity)) {
+			HookWeaponBase(entity);
+		}
 		if (IsWeaponBaseGun(entity)) {
 			char className[64];
 			GetEntityClassname(entity, className, sizeof(className));
@@ -162,9 +176,17 @@ public void OnEntityCreated(int entity, const char[] className) {
 				.callback = OnGetGrenadeDamageRadiusPost);
 	}
 	
+	if (IsEntityWeapon(entity)) {
+		HookWeaponBase(entity);
+	}
 	if (IsWeaponBaseGun(entity)) {
 		HookWeaponBaseGun(entity, className);
 	}
+}
+
+static MRESReturn HookWeaponBase(int entity) {
+	DHookEntity(g_DHookWeaponGetInitialAfterburn, true, entity,
+			.callback = OnGetInitialAfterburnPost);
 }
 
 static void HookWeaponBaseGun(int entity, const char[] className) {
@@ -301,6 +323,15 @@ public MRESReturn OnGetProjectileSpeedPost(int weapon, Handle hReturn) {
 	return MRES_Ignored;
 }
 
+MRESReturn OnGetInitialAfterburnPost(int weapon, Handle hReturn) {
+	if (DHookGetReturn(hReturn)) {
+		return MRES_Ignored;
+	}
+	float flAfterburn = TF2Attrib_HookValueFloat(0.0, "set_dmgtype_ignite", weapon);
+	DHookSetReturn(hReturn, flAfterburn);
+	return MRES_Override;
+}
+
 public MRESReturn OnFireJarPre(int weapon, Handle hReturn, Handle hParams) {
 	int owner = !DHookIsNullParam(hParams, 1) ?
 			DHookGetParam(hParams, 1) : INVALID_ENT_REFERENCE;
@@ -397,4 +428,8 @@ void GetPlayerShootPosition(int client, float vecShootPosition[3]) {
 
 bool SendWeaponAnim(int weapon, int activity) {
 	SDKCall(g_SDKCallBaseWeaponSendAnim, weapon, activity);
+}
+
+bool IsEntityWeapon(int entity) {
+	return SDKCall(g_SDKCallIsBaseEntityWeapon, entity);
 }

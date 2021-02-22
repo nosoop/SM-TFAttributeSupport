@@ -32,6 +32,13 @@
 				"return"		"float"
 				"this"			"entity"
 			}
+			"CTFWeaponBase::GetInitialAfterburnDuration()"
+			{
+				"offset"		"CTFWeaponBase::GetInitialAfterburnDuration()"
+				"hooktype"		"entity"
+				"return"		"float"
+				"this"			"entity"
+			}
 			"CTFWeaponBaseGun::FireJar()"
 			{
 				"offset"		"CTFWeaponBaseGun::FireJar()"
@@ -56,6 +63,11 @@
 		}
 		"Offsets"
 		{
+			"CBaseCombatWeapon::IsBaseCombatWeapon()"
+			{
+				"windows"	"86"
+				"linux"		"87"
+			}
 			"CBaseCombatWeapon::SendWeaponAnim()"
 			{
 				"windows"	"242"
@@ -75,6 +87,16 @@
 			{
 				"windows"	"268"
 				"linux"		"269"
+			}
+			"CTFWeaponBase::GetInitialAfterburnDuration()"
+			{
+				"windows"	"448"
+				"linux"		"455"
+			}
+			"CTFWeaponBase::GetAfterburnRateOnHit()"
+			{
+				"windows"	"449"
+				"linux"		"456"
 			}
 			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)"
 			{
