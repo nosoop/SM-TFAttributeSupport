@@ -427,7 +427,7 @@ void GetPlayerShootPosition(int client, float vecShootPosition[3]) {
 }
 
 bool SendWeaponAnim(int weapon, int activity) {
-	SDKCall(g_SDKCallBaseWeaponSendAnim, weapon, activity);
+	return SDKCall(g_SDKCallBaseWeaponSendAnim, weapon, activity);
 }
 
 bool IsEntityWeapon(int entity) {
