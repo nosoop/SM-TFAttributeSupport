@@ -32,6 +32,24 @@
 				"return"		"float"
 				"this"			"entity"
 			}
+			"CTFBaseRocket::Explode()"
+			{
+				"offset"		"CTFBaseRocket::Explode()"
+				"hooktype"		"entity"
+				"return"		"float"
+				"this"			"entity"
+				"arguments"
+				{
+					"trace"
+					{
+						"type"	"int"
+					}
+					"target"
+					{
+						"type"	"cbaseentity"
+					}
+				}
+			}
 			"CTFWeaponBase::GetInitialAfterburnDuration()"
 			{
 				"offset"		"CTFWeaponBase::GetInitialAfterburnDuration()"
@@ -87,6 +105,11 @@
 			{
 				"windows"	"268"
 				"linux"		"269"
+			}
+			"CTFBaseRocket::Explode()"
+			{
+				"windows"	"232"
+				"linux"		"233"
 			}
 			"CTFWeaponBase::GetInitialAfterburnDuration()"
 			{

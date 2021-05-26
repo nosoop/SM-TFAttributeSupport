@@ -11,12 +11,14 @@
 #include <dhooks>
 
 #include <stocksoup/memory>
+#include <stocksoup/tf/entity_prop_stocks>
+#include <stocksoup/tf/tempents_stocks>
 
 #pragma newdecls required
 
 #include <tf2attributes>
 
-#define PLUGIN_VERSION "1.2.0"
+#define PLUGIN_VERSION "1.2.1"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -31,6 +33,7 @@ Handle g_DHookGrenadeGetDamageRadius;
 Handle g_DHookWeaponGetProjectileSpeed;
 Handle g_DHookWeaponGetInitialAfterburn;
 Handle g_DHookFireJar;
+Handle g_DHookRocketExplode;
 
 Handle g_SDKCallBaseWeaponSendAnim;
 Handle g_SDKCallIsBaseEntityWeapon;
@@ -94,6 +97,8 @@ public void OnPluginStart() {
 			"CTFWeaponBaseGun::GetProjectileSpeed()");
 	
 	g_DHookFireJar = DHookCreateFromConf(hGameConf, "CTFWeaponBaseGun::FireJar()");
+	
+	g_DHookRocketExplode = DHookCreateFromConf(hGameConf, "CTFBaseRocket::Explode()");
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
@@ -174,6 +179,9 @@ public void OnEntityCreated(int entity, const char[] className) {
 	if (strncmp(className, "tf_projectile_jar", strlen("tf_projectile_jar")) == 0) {
 		DHookEntity(g_DHookGrenadeGetDamageRadius, true, entity,
 				.callback = OnGetGrenadeDamageRadiusPost);
+	}
+	if (StrEqual(className, "tf_projectile_flare")) {
+		DHookEntity(g_DHookRocketExplode, true, entity, .callback = OnRocketExplodePost);
 	}
 	
 	if (IsEntityWeapon(entity)) {
@@ -330,6 +338,23 @@ MRESReturn OnGetInitialAfterburnPost(int weapon, Handle hReturn) {
 	float flAfterburn = TF2Attrib_HookValueFloat(0.0, "set_dmgtype_ignite", weapon);
 	DHookSetReturn(hReturn, flAfterburn);
 	return MRES_Override;
+}
+
+MRESReturn OnRocketExplodePost(int rocket, Handle hParams) {
+	int owner = TF2_GetEntityOwner(rocket);
+	if (0 < owner < MaxClients
+			&& TF2Attrib_HookValueInt(0, "use_large_smoke_explosion", owner)) {
+		float origin[3], angles[3];
+		GetEntPropVector(rocket, Prop_Data, "m_vecAbsOrigin", origin);
+		GetEntPropVector(rocket, Prop_Data, "m_angAbsRotation", angles);
+		
+		TE_SetupTFParticleEffect("explosionTrail_seeds_mvm", origin, .vecAngles = angles);
+		TE_SendToAll();
+		
+		TE_SetupTFParticleEffect("fluidSmokeExpl_ring_mvm", origin, .vecAngles = angles);
+		TE_SendToAll();
+	}
+	return MRES_Ignored;
 }
 
 public MRESReturn OnFireJarPre(int weapon, Handle hReturn, Handle hParams) {
