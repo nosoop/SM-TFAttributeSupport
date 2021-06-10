@@ -36,7 +36,7 @@
 			{
 				"offset"		"CTFBaseRocket::Explode()"
 				"hooktype"		"entity"
-				"return"		"float"
+				"return"		"void"
 				"this"			"entity"
 				"arguments"
 				{
