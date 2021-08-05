@@ -222,9 +222,9 @@ public void OnClientPutInServer(int client) {
  */
 void OnClientSpawnPost(int client) {
 	for (int i; i < 3; i++) {
-		int secondary = GetPlayerWeaponSlot(client, 1);
-		if (IsValidEntity(secondary)) {
-			PostSpawnUnsetItemCharge(secondary);
+		int weapon = GetPlayerWeaponSlot(client, i);
+		if (IsValidEntity(weapon)) {
+			PostSpawnUnsetItemCharge(weapon);
 		}
 	}
 }
@@ -240,9 +240,9 @@ MRESReturn OnPlayerRegeneratePost(int client, Handle hParams) {
 	}
 	
 	for (int i; i < 3; i++) {
-		int secondary = GetPlayerWeaponSlot(client, i);
-		if (IsValidEntity(secondary)) {
-			ProcessItemRecharge(secondary);
+		int weapon = GetPlayerWeaponSlot(client, i);
+		if (IsValidEntity(weapon)) {
+			ProcessItemRecharge(weapon);
 		}
 	}
 }
