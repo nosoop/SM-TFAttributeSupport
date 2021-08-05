@@ -20,7 +20,7 @@
 
 #include <tf2attributes>
 
-#define PLUGIN_VERSION "1.2.1"
+#define PLUGIN_VERSION "1.3.0"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
