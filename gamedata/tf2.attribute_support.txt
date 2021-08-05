@@ -50,6 +50,20 @@
 					}
 				}
 			}
+			"CTFPlayer::Regenerate()"
+			{
+				"signature"		"CTFPlayer::Regenerate()"
+				"callconv"		"thiscall"
+				"this"			"entity"
+				"return"		"void"
+				"arguments"
+				{
+					"refill_health_ammo"
+					{
+						"type"	"bool"
+					}
+				}
+			}
 			"CTFWeaponBase::GetInitialAfterburnDuration()"
 			{
 				"offset"		"CTFWeaponBase::GetInitialAfterburnDuration()"
@@ -121,6 +135,11 @@
 				"windows"	"450"
 				"linux"		"457"
 			}
+			"CTFWeaponBase::InternalGetEffectBarRechargeTime()"
+			{
+				"windows"	"456"
+				"linux"		"463"
+			}
 			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)"
 			{
 				"windows"	"237"
@@ -135,6 +154,16 @@
 			{
 				"windows"	"474"
 				"linux"		"481"
+			}
+		}
+		"Signatures"
+		{
+			"CTFPlayer::Regenerate()"
+			{
+				// unique x-ref to string 'player_regenerate'
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer10RegenerateEb"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x53\x56\x57\x8B\xF9\x8B\x07"
 			}
 		}
 	}

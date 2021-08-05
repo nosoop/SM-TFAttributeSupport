@@ -8,11 +8,13 @@
 #include <sourcemod>
 
 #include <sdktools>
+#include <sdkhooks>
 #include <dhooks>
 
 #include <stocksoup/memory>
 #include <stocksoup/tf/entity_prop_stocks>
 #include <stocksoup/tf/tempents_stocks>
+#include <stocksoup/tf/weapon>
 
 #pragma newdecls required
 
@@ -35,10 +37,13 @@ Handle g_DHookWeaponGetInitialAfterburn;
 Handle g_DHookFireJar;
 Handle g_DHookRocketExplode;
 
+Handle g_DHookPlayerRegenerate;
+
 Handle g_SDKCallBaseWeaponSendAnim;
 Handle g_SDKCallIsBaseEntityWeapon;
 Handle g_SDKCallGetPlayerShootPosition;
 Handle g_SDKCallInitGrenade;
+Handle g_SDKCallInternalGetEffectBarRechargeTime;
 
 int voffs_SendWeaponAnim;
 
@@ -100,6 +105,9 @@ public void OnPluginStart() {
 	
 	g_DHookRocketExplode = DHookCreateFromConf(hGameConf, "CTFBaseRocket::Explode()");
 	
+	g_DHookPlayerRegenerate = DHookCreateFromConf(hGameConf, "CTFPlayer::Regenerate()");
+	DHookEnableDetour(g_DHookPlayerRegenerate, true, OnPlayerRegeneratePost);
+	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
 			"CBaseCombatWeapon::IsBaseCombatWeapon()");
@@ -121,7 +129,19 @@ public void OnPluginStart() {
 	PrepSDKCall_AddParameter(SDKType_Float, SDKPass_Plain);
 	g_SDKCallInitGrenade = EndPrepSDKCall();
 	
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
+			"CTFWeaponBase::InternalGetEffectBarRechargeTime()");
+	PrepSDKCall_SetReturnInfo(SDKType_Float, SDKPass_Plain);
+	g_SDKCallInternalGetEffectBarRechargeTime = EndPrepSDKCall();
+	
 	delete hGameConf;
+	
+	for (int i = 1; i <= MaxClients; i++) {
+		if (IsClientInGame(i)) {
+			OnClientPutInServer(i);
+		}
+	}
 }
 
 public void OnMapStart() {
@@ -189,6 +209,41 @@ public void OnEntityCreated(int entity, const char[] className) {
 	}
 	if (IsWeaponBaseGun(entity)) {
 		HookWeaponBaseGun(entity, className);
+	}
+}
+
+public void OnClientPutInServer(int client) {
+	SDKHook(client, SDKHook_SpawnPost, OnClientSpawnPost);
+}
+
+/**
+ * Called when the player is finished spawning in (e.g. changing classes).
+ * Starts regenerating the effect bar on any items with item_meter_resupply_denied set.
+ */
+void OnClientSpawnPost(int client) {
+	for (int i; i < 3; i++) {
+		int secondary = GetPlayerWeaponSlot(client, 1);
+		if (IsValidEntity(secondary)) {
+			PostSpawnUnsetItemCharge(secondary);
+		}
+	}
+}
+
+/**
+ * Called when the player is finished regenerating.
+ * Clears ammo granted during regeneration on items with item_meter_resupply_denied set.
+ */
+MRESReturn OnPlayerRegeneratePost(int client, Handle hParams) {
+	bool bRefillHealthAndAmmo = DHookGetParam(hParams, 1);
+	if (!bRefillHealthAndAmmo) {
+		return;
+	}
+	
+	for (int i; i < 3; i++) {
+		int secondary = GetPlayerWeaponSlot(client, i);
+		if (IsValidEntity(secondary)) {
+			ProcessItemRecharge(secondary);
+		}
 	}
 }
 
@@ -441,6 +496,53 @@ public MRESReturn OnFireJarPre(int weapon, Handle hReturn, Handle hParams) {
 }
 
 /**
+ * Checks if the given weapon should have their charge meter zeroed out during spawn.
+ */
+void PostSpawnUnsetItemCharge(int weapon) {
+	if (!IsEntityWeapon(weapon)) {
+		return;
+	} else if (TF2Attrib_HookValueInt(0, "item_meter_resupply_denied", weapon) <= 0) {
+		// item charges are only unset during spawn when item_meter_resupply_denied > 0
+		// see https://gist.github.com/sigsegv-mvm/43e76b30cedca0717e88988ac9172526
+		return;
+	}
+	
+	/**
+	 * If we have an item that wants to not have their meter filled on spawn, zero out their
+	 * ammo.  We also set `m_flLastFireTime` and `m_flEffectBarRegenTime` since both of those
+	 * determine how the meter is rendered on the client.
+	 */
+	float flRechargeTime = GetEffectBarRechargeTime(weapon);
+	SetEntPropFloat(weapon, Prop_Send, "m_flEffectBarRegenTime", GetGameTime() + flRechargeTime);
+	SetEntPropFloat(weapon, Prop_Send, "m_flLastFireTime", GetGameTime());
+	TF2_SetWeaponAmmo(weapon, 0);
+}
+
+/**
+ * Checks if the given weapon is recharging; if so, prevent ammo bring granted.
+ */
+void ProcessItemRecharge(int weapon) {
+	if (!IsEntityWeapon(weapon)) {
+		return;
+	} else if (TF2Attrib_HookValueInt(0, "item_meter_resupply_denied", weapon) == 0) {
+		// item charges are only unset on resupply when item_meter_resupply_denied != 0
+		return;
+	}
+	
+	/**
+	 * If we have an item that isn't fully charged, unset our ammo count for it; we don't have
+	 * to do anything with `m_flEffectBarRegenTime` since it'll only update itself when ammo is
+	 * full in a later function call.
+	 */
+	float flEffectBarRegenTime = GetEntPropFloat(weapon, Prop_Send, "m_flEffectBarRegenTime");
+	if (flEffectBarRegenTime > GetGameTime()) {
+		// TODO is it possible to have multiple copies of an item for recharge?
+		// if so we should reset it to the last known ammo count
+		TF2_SetWeaponAmmo(weapon, 0);
+	}
+}
+
+/**
  * Kludge to detect CTFWeaponBaseGun-derived entities.
  */
 static bool IsWeaponBaseGun(int entity) {
@@ -457,4 +559,12 @@ bool SendWeaponAnim(int weapon, int activity) {
 
 bool IsEntityWeapon(int entity) {
 	return SDKCall(g_SDKCallIsBaseEntityWeapon, entity);
+}
+
+float GetEffectBarRechargeTime(int entity) {
+	if (!IsEntityWeapon(entity)) {
+		ThrowError("Entity %d is not a weapon", entity);
+	}
+	float flRechargeTime = SDKCall(g_SDKCallInternalGetEffectBarRechargeTime, entity);
+	return TF2Attrib_HookValueFloat(flRechargeTime, "effectbar_recharge_rate", entity);
 }
