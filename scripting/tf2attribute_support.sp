@@ -20,7 +20,7 @@
 
 #include <tf2attributes>
 
-#define PLUGIN_VERSION "1.3.0"
+#define PLUGIN_VERSION "1.3.1"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -538,6 +538,12 @@ void ProcessItemRecharge(int weapon) {
 	if (flEffectBarRegenTime > GetGameTime()) {
 		// TODO is it possible to have multiple copies of an item for recharge?
 		// if so we should reset it to the last known ammo count
+		TF2_SetWeaponAmmo(weapon, 0);
+	} else if (GetEntPropFloat(weapon, Prop_Send, "m_flLastFireTime") == 0.0) {
+		// this weapon appears to have been freshly spawned; force it to recharge
+		float flRechargeTime = GetEffectBarRechargeTime(weapon);
+		SetEntPropFloat(weapon, Prop_Send, "m_flEffectBarRegenTime", GetGameTime() + flRechargeTime);
+		SetEntPropFloat(weapon, Prop_Send, "m_flLastFireTime", GetGameTime());
 		TF2_SetWeaponAmmo(weapon, 0);
 	}
 }
