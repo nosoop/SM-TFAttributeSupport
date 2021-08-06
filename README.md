@@ -22,6 +22,13 @@ animation quirks.
 - Weapons with pre-Jungle Inferno-style recharge meters (Jars, lunch items, Sandman / Wrap
 Assassin) are now able to use `item_meter_resupply_denied` to not have their charge meters
 filled on spawn and / or resupply.
+  - Setting this to a positive number will empty the charge during spawn and on resupply; a
+  negative number will allow it to spawn with full charge, but not on resupply.  (This
+  replicates the behavior specified in [sigsegv's documentation on item meters][].)
+  - Plugins that grant weapons to players after spawn or resupply are likely to not work with
+  this attribute.  (Shameless plug:  My own [Custom Weapons X][] has no problem here.)
+  - This portion was sponsored by kingofings, who has allowed me to publish it as part of this
+  plugin.  Thanks!
 
 ## Dependencies
 
@@ -32,3 +39,5 @@ This also needs the [detour-supporting version of DHooks][dynhooks].
 
 [TF2Attributes]: https://github.com/nosoop/tf2attributes
 [dynhooks]: https://forums.alliedmods.net/showpost.php?p=2588686&postcount=589
+[sigsegv's documentation on item meters]: https://gist.github.com/sigsegv-mvm/43e76b30cedca0717e88988ac9172526
+[Custom Weapons X]: https://github.com/nosoop/SM-TFCustomWeaponsX
