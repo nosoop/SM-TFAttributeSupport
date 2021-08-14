@@ -106,6 +106,7 @@ public void OnPluginStart() {
 	g_DHookRocketExplode = DHookCreateFromConf(hGameConf, "CTFBaseRocket::Explode()");
 	
 	g_DHookPlayerRegenerate = DHookCreateFromConf(hGameConf, "CTFPlayer::Regenerate()");
+	DHookEnableDetour(g_DHookPlayerRegenerate, false, OnPlayerRegeneratePre);
 	DHookEnableDetour(g_DHookPlayerRegenerate, true, OnPlayerRegeneratePost);
 	
 	StartPrepSDKCall(SDKCall_Entity);
@@ -227,6 +228,14 @@ void OnClientSpawnPost(int client) {
 			PostSpawnUnsetItemCharge(weapon);
 		}
 	}
+}
+
+/**
+ * Called before the player is regenerated.
+ * This is a stub callback to force detours to play nice on Windows.
+ */
+MRESReturn OnPlayerRegeneratePre(int client, Handle hParams) {
+	// wah.
 }
 
 /**
