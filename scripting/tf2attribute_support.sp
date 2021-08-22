@@ -20,7 +20,7 @@
 
 #include <tf2attributes>
 
-#define PLUGIN_VERSION "1.3.1"
+#define PLUGIN_VERSION "1.3.2"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -505,6 +505,9 @@ void PostSpawnUnsetItemCharge(int weapon) {
 		// item charges are only unset during spawn when item_meter_resupply_denied > 0
 		// see https://gist.github.com/sigsegv-mvm/43e76b30cedca0717e88988ac9172526
 		return;
+	} else if (GetEffectBarRechargeTime(weapon) <= 0.0) {
+		// this item doesn't use the legacy recharge method (Gas Passer uses a new interface)
+		return;
 	}
 	
 	/**
@@ -526,6 +529,9 @@ void ProcessItemRecharge(int weapon) {
 		return;
 	} else if (TF2Attrib_HookValueInt(0, "item_meter_resupply_denied", weapon) == 0) {
 		// item charges are only unset on resupply when item_meter_resupply_denied != 0
+		return;
+	} else if (GetEffectBarRechargeTime(weapon) <= 0.0) {
+		// this item doesn't use the legacy recharge method (Gas Passer uses a new interface)
 		return;
 	}
 	
