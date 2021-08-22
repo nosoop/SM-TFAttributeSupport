@@ -20,7 +20,7 @@
 
 #include <tf2attributes>
 
-#define PLUGIN_VERSION "1.3.2"
+#define PLUGIN_VERSION "1.3.3"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -362,7 +362,7 @@ public MRESReturn OnGetProjectileSpeedPost(int weapon, Handle hReturn) {
 		case Projectile_CrossbowBolt, Projectile_CrossbowBoltFestive, Projectile_RescueClaw: {
 			// CTFCrossbow::GetProjectileSpeed()
 			// same as Projectile_Arrow but charge = 0.75
-			speed = 2400.0;
+			speed = TF2Attrib_HookValueFloat(2400.0, "mult_projectile_speed", weapon);
 		}
 		case Projectile_EnergyBall: {
 			// CTFParticleCannon::GetProjectileSpeed()
