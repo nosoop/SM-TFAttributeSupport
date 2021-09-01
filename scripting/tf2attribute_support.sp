@@ -20,7 +20,7 @@
 
 #include <tf2attributes>
 
-#define PLUGIN_VERSION "1.3.3"
+#define PLUGIN_VERSION "1.4.0"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -49,6 +49,9 @@ int voffs_SendWeaponAnim;
 
 #define TF_ITEMDEF_FORCE_A_NATURE                45
 #define TF_ITEMDEF_FORCE_A_NATURE_FESTIVE        1078
+
+#define ITEM_METER_CHARGE_OVER_TIME (1 << 0)
+#define ITEM_METER_CHARGE_BY_DAMAGE (1 << 1)
 
 enum eTFProjectileOverride {
 	Projectile_Bullet = 1,
@@ -214,6 +217,7 @@ public void OnEntityCreated(int entity, const char[] className) {
 
 public void OnClientPutInServer(int client) {
 	SDKHook(client, SDKHook_SpawnPost, OnClientSpawnPost);
+	SDKHook(client, SDKHook_OnTakeDamageAlivePost, OnClientTakeDamageAlivePost);
 }
 
 /**
@@ -225,6 +229,25 @@ void OnClientSpawnPost(int client) {
 		int weapon = GetPlayerWeaponSlot(client, i);
 		if (IsValidEntity(weapon)) {
 			PostSpawnUnsetItemCharge(weapon);
+		}
+	}
+}
+
+/**
+ * Called when a player takes damage.  Attacker gains charge on legacy item meters.
+ */
+void OnClientTakeDamageAlivePost(int victim, int attacker, int inflictor, float damage,
+		int damagetype, int weapon, const float damageForce[3], const float damagePosition[3],
+		int damagecustom) {
+	if (attacker < 1 || attacker >= MaxClients) {
+		return;
+	}
+	
+	// the 'correct' way would be to implement this within `CTFPlayer::OnDamageDealt()`
+	for (int i; i < 3; i++) {
+		int attackerWeapon = GetPlayerWeaponSlot(attacker, i);
+		if (IsValidEntity(attackerWeapon)) {
+			ApplyItemChargeDamageModifier(attackerWeapon, damage);
 		}
 	}
 }
@@ -552,6 +575,40 @@ void ProcessItemRecharge(int weapon) {
 		SetEntPropFloat(weapon, Prop_Send, "m_flLastFireTime", GetGameTime());
 		TF2_SetWeaponAmmo(weapon, 0);
 	}
+}
+
+/**
+ * Updates recharge time for legacy item meters with both item_meter_charge_type and
+ * item_meter_damage_for_full_charge attributes.
+ */
+void ApplyItemChargeDamageModifier(int weapon, float flDamage) {
+	if (!IsEntityWeapon(weapon)) {
+		return;
+	} else if (TF2Attrib_HookValueInt(0, "item_meter_charge_type", weapon)
+			& ITEM_METER_CHARGE_BY_DAMAGE == 0) {
+		// item_meter_charge_type is not set to recharge when dealing damage
+		return;
+	}
+	
+	float flRechargeTime = GetEffectBarRechargeTime(weapon);
+	if (flRechargeTime <= 0.0) {
+		// this item doesn't use the legacy recharge method (Gas Passer uses a new interface)
+		return;
+	}
+	
+	float flDamageForFullCharge = TF2Attrib_HookValueFloat(0.0,
+			"item_meter_damage_for_full_charge", weapon);
+	if (flDamageForFullCharge <= 0.0) {
+		ThrowError("item_meter_damage_for_full_charge is a non-positive value on entity %d",
+				weapon);
+		return;
+	}
+	
+	// reduce the amount of time until recharge
+	float flCurrentRegenTime = GetEntPropFloat(weapon, Prop_Send, "m_flEffectBarRegenTime");
+	flCurrentRegenTime -= (flDamage / flDamageForFullCharge) * flRechargeTime;
+	
+	SetEntPropFloat(weapon, Prop_Send, "m_flEffectBarRegenTime", flCurrentRegenTime);
 }
 
 /**

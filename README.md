@@ -32,6 +32,11 @@ filled on spawn and / or resupply.
   this attribute.  (Shameless plug:  My own [Custom Weapons X][] has no problem here.)
   - This portion was sponsored by kingofings, who has allowed me to publish it as part of this
   plugin.  Thanks!
+- Weapons with pre-Jungle Inferno-style recharge meters (see above) are now able to use
+`item_meter_charge_type` and `item_meter_damage_for_full_charge` to gain meter charge when the
+owner deals damage.
+  - `item_meter_charge_type` must have bit `(1 << 1)` set, per the documentation linked above.
+  - This portion was sponsored by G14.  Thanks!
 
 ## Dependencies
 
