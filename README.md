@@ -19,6 +19,9 @@ animation quirks.
   must be equal to or greater than 1.
   - Weapons that already support burn durations will retain their default values &mdash; you
   cannot override their durations here (use `weapon burn time *` in those cases).
+  - The burn time currently cannot exceed 10 seconds.  The game clamps burn durations to this
+  value at ignite time (while there are ways around it, none of them can be implemented
+  cleanly).
 - Weapons with pre-Jungle Inferno-style recharge meters (Jars, lunch items, Sandman / Wrap
 Assassin) are now able to use `item_meter_resupply_denied` to not have their charge meters
 filled on spawn and / or resupply.
