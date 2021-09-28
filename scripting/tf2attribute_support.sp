@@ -20,7 +20,7 @@
 
 #include <tf2attributes>
 
-#define PLUGIN_VERSION "1.4.0"
+#define PLUGIN_VERSION "1.4.1"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -239,7 +239,7 @@ void OnClientSpawnPost(int client) {
 void OnClientTakeDamageAlivePost(int victim, int attacker, int inflictor, float damage,
 		int damagetype, int weapon, const float damageForce[3], const float damagePosition[3],
 		int damagecustom) {
-	if (attacker < 1 || attacker >= MaxClients) {
+	if (attacker < 1 || attacker >= MaxClients || attacker == victim) {
 		return;
 	}
 	
