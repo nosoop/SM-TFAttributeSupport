@@ -97,63 +97,63 @@
 		{
 			"CBaseCombatWeapon::IsBaseCombatWeapon()"
 			{
-				"windows"	"86"
-				"linux"		"87"
+				"windows"	"89"
+				"linux"		"90"
 			}
 			"CBaseCombatWeapon::SendWeaponAnim()"
 			{
-				"windows"	"243"
-				"linux"		"249"
+				"windows"	"246"
+				"linux"		"252"
 			}
 			"CBaseEntity::GetDamage()"
 			{
-				"windows"		"128"
-				"linux"			"129"
+				"windows"		"131"
+				"linux"			"132"
 			}
 			"CBaseGrenade::GetDamageRadius()"
 			{
-				"windows"	"235"
-				"linux"		"236"
+				"windows"	"238"
+				"linux"		"239"
 			}
 			"CBasePlayer::Weapon_ShootPosition()"
 			{
-				"windows"	"269"
-				"linux"		"270"
+				"windows"	"272"
+				"linux"		"273"
 			}
 			"CTFBaseRocket::Explode()"
 			{
-				"windows"	"233"
-				"linux"		"234"
+				"windows"	"236"
+				"linux"		"237"
 			}
 			"CTFWeaponBase::GetInitialAfterburnDuration()"
 			{
-				"windows"	"449"
-				"linux"		"456"
+				"windows"	"452"
+				"linux"		"459"
 			}
 			"CTFWeaponBase::GetAfterburnRateOnHit()"
 			{
-				"windows"	"450"
-				"linux"		"457"
+				"windows"	"453"
+				"linux"		"460"
 			}
 			"CTFWeaponBase::InternalGetEffectBarRechargeTime()"
 			{
-				"windows"	"456"
-				"linux"		"463"
+				"windows"	"459"
+				"linux"		"466"
 			}
 			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)"
 			{
-				"windows"	"237"
-				"linux"		"239"
+				"windows"	"240"
+				"linux"		"242"
 			}
 			"CTFWeaponBaseGun::FireJar()"
 			{
-				"windows"	"469"
-				"linux"		"476"
+				"windows"	"472"
+				"linux"		"479"
 			}
 			"CTFWeaponBaseGun::GetProjectileSpeed()"
 			{
-				"windows"	"474"
-				"linux"		"481"
+				"windows"	"477"
+				"linux"		"484"
 			}
 		}
 		"Signatures"
