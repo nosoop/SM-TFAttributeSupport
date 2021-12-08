@@ -20,7 +20,7 @@
 
 #include <tf2attributes>
 
-#define PLUGIN_VERSION "1.4.1"
+#define PLUGIN_VERSION "1.5.0"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -31,6 +31,7 @@ public Plugin myinfo = {
 
 Handle g_DHookBaseEntityGetDamage;
 Handle g_DHookWeaponSendAnim;
+Handle g_DHookGrenadeInit;
 Handle g_DHookGrenadeGetDamageRadius;
 Handle g_DHookWeaponGetProjectileSpeed;
 Handle g_DHookWeaponGetInitialAfterburn;
@@ -49,6 +50,9 @@ int voffs_SendWeaponAnim;
 
 #define TF_ITEMDEF_FORCE_A_NATURE                45
 #define TF_ITEMDEF_FORCE_A_NATURE_FESTIVE        1078
+
+// this is dynamically set based on CTFWeaponInfo::m_flDamageRadius, but we'll just define it
+#define TF_DMGRADIUS_GRENADE_LAUNCHER            146.0
 
 #define ITEM_METER_CHARGE_OVER_TIME (1 << 0)
 #define ITEM_METER_CHARGE_BY_DAMAGE (1 << 1)
@@ -107,6 +111,9 @@ public void OnPluginStart() {
 	g_DHookFireJar = DHookCreateFromConf(hGameConf, "CTFWeaponBaseGun::FireJar()");
 	
 	g_DHookRocketExplode = DHookCreateFromConf(hGameConf, "CTFBaseRocket::Explode()");
+	
+	g_DHookGrenadeInit = DHookCreateFromConf(hGameConf,
+			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
 	
 	g_DHookPlayerRegenerate = DHookCreateFromConf(hGameConf, "CTFPlayer::Regenerate()");
 	DHookEnableDetour(g_DHookPlayerRegenerate, true, OnPlayerRegeneratePost);
@@ -212,6 +219,10 @@ public void OnEntityCreated(int entity, const char[] className) {
 	}
 	if (IsWeaponBaseGun(entity)) {
 		HookWeaponBaseGun(entity, className);
+	}
+	
+	if (strncmp(className, "tf_projectile_pipe", strlen("tf_projectile_pipe")) == 0) {
+		DHookEntity(g_DHookGrenadeInit, true, entity, .callback = OnGrenadeInit);
 	}
 }
 
@@ -362,6 +373,17 @@ public MRESReturn OnGetGrenadeDamageRadiusPost(int grenade, Handle hReturn) {
 	
 	DHookSetReturn(hReturn, TF2Attrib_HookValueFloat(radius, "mult_explosion_radius", weapon));
 	return MRES_Supercede;
+}
+
+/**
+ * Fixes initialized grenades so they have a default explosion radius set.
+ */
+MRESReturn OnGrenadeInit(int grenade, Handle hParams) {
+	float flRadius = GetEntPropFloat(grenade, Prop_Send, "m_DmgRadius");
+	if (!flRadius) {
+		SetEntPropFloat(grenade, Prop_Send, "m_DmgRadius", TF_DMGRADIUS_GRENADE_LAUNCHER);
+	}
+	return MRES_Ignored;
 }
 
 /**

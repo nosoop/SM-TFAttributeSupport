@@ -92,6 +92,36 @@
 				"return"		"float"
 				"this"			"entity"
 			}
+			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)"
+			{
+				"offset"		"CTFWeaponBaseGrenadeProj::InitGrenade(int float)"
+				"hooktype"		"entity"
+				"return"		"void"
+				"this"			"entity"
+				"arguments"
+				{
+					"velocity"
+					{
+						"type"	"vectorptr"
+					}
+					"ang_vel"
+					{
+						"type"	"vectorptr"
+					}
+					"owner"
+					{
+						"type"	"cbaseentity"
+					}
+					"damage"
+					{
+						"type"	"int"
+					}
+					"radius"
+					{
+						"type"	"float"
+					}
+				}
+			}
 		}
 		"Offsets"
 		{

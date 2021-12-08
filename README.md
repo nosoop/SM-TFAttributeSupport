@@ -10,8 +10,10 @@ Improves support for:
 - Pomson / Righteous Bison projectile speeds and damage amounts.
 - Weapons using the `override projectile type` attribute; projectiles are initialized with the
 correct speed.
-- Improved support for the `override projectile type` attribute, enabling players to shoot
-jar-based projectiles (Jarate, Mad Milk, Flying Guillotine, Gas Passer).
+- Improved support for the `override projectile type` attribute
+  - &hellip; enabling players to shoot jar-based projectiles (Jarate, Mad Milk,
+  Flying Guillotine, Gas Passer).
+  - &hellip; initializing damage radius for grenades spawned by non-grenade launchers.
 - Scatterguns can now use the Force-a-Nature's `scattergun has knockback` attribute without any
 animation quirks.
 - Weapons are now able to use `Set DamageType Ignite` again.
