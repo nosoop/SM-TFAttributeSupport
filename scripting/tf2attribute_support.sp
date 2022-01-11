@@ -20,7 +20,7 @@
 
 #include <tf2attributes>
 
-#define PLUGIN_VERSION "1.5.0"
+#define PLUGIN_VERSION "1.6.0"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -229,6 +229,7 @@ public void OnEntityCreated(int entity, const char[] className) {
 public void OnClientPutInServer(int client) {
 	SDKHook(client, SDKHook_SpawnPost, OnClientSpawnPost);
 	SDKHook(client, SDKHook_OnTakeDamageAlivePost, OnClientTakeDamageAlivePost);
+	SDKHook(client, SDKHook_GroundEntChangedPost, OnClientGroundEntChangedPost);
 }
 
 /**
@@ -261,6 +262,46 @@ void OnClientTakeDamageAlivePost(int victim, int attacker, int inflictor, float 
 			ApplyItemChargeDamageModifier(attackerWeapon, damage);
 		}
 	}
+}
+
+/**
+ * Called when the player has left the ground.  Attaches a jump particle to their feet.
+ */
+void OnClientGroundEntChangedPost(int client) {
+	// hardcoded class attach point tables -- in the future we should use LookupEntityAttachment
+	static int g_classFeet[10][2] = {
+		{ 0, 0 },
+		{ 4, 5 },
+		{ 5, 6 },
+		{ 5, 6 },
+		{ 4, 5 },
+		{ 5, 6 },
+		{ 5, 6 },
+		{ 22, 23 },
+		{ 6, 7 },
+		{ 2, 3 },
+	};
+	
+	if (!IsPlayerAlive(client) || GetClientButtons(client) & IN_JUMP == 0) {
+		return;
+	}
+	
+	if (!IsValidEntity(GetEntPropEnt(client, Prop_Send, "m_hGroundEntity"))) {
+		return;
+	}
+	
+	if (!TF2Attrib_HookValueInt(0, "bot_custom_jump_particle", client)) {
+		return;
+	}
+	
+	int pc = view_as<int>(TF2_GetPlayerClass(client));
+	TE_SetupTFParticleEffect("rocketjump_smoke", NULL_VECTOR, .entity = client,
+			.attachType = PATTACH_POINT_FOLLOW, .attachPoint = g_classFeet[pc][0]);
+	TE_SendToAll();
+	
+	TE_SetupTFParticleEffect("rocketjump_smoke", NULL_VECTOR, .entity = client,
+			.attachType = PATTACH_POINT_FOLLOW, .attachPoint = g_classFeet[pc][1]);
+	TE_SendToAll();
 }
 
 /**

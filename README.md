@@ -39,6 +39,8 @@ filled on spawn and / or resupply.
 owner deals damage.
   - `item_meter_charge_type` must have bit `(1 << 1)` set, per the documentation linked above.
   - This portion was sponsored by G14.  Thanks!
+- `bot custom jump particle` can now be used on players in non-MvM mode.
+  - This portion was sponsored by @JohnnyAlexanderTF2.  Thanks!
 
 ## Dependencies
 
