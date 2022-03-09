@@ -25,6 +25,24 @@
 				"return"		"float"
 				"this"			"entity"
 			}
+			"CBaseGrenade::Explode()"
+			{
+				"offset"		"CBaseGrenade::Explode()"
+				"hooktype"		"entity"
+				"return"		"void"
+				"this"			"entity"
+				"arguments"
+				{
+					"trace"
+					{
+						"type"	"int"
+					}
+					"damage_type"
+					{
+						"type"	"int"
+					}
+				}
+			}
 			"CBaseGrenade::GetDamageRadius()"
 			{
 				"offset"		"CBaseGrenade::GetDamageRadius()"
@@ -144,6 +162,11 @@
 			{
 				"windows"	"238"
 				"linux"		"239"
+			}
+			"CBaseGrenade::Explode()"
+			{
+				"windows"	"232"
+				"linux"		"233"
 			}
 			"CBasePlayer::Weapon_ShootPosition()"
 			{

@@ -33,6 +33,7 @@ Handle g_DHookBaseEntityGetDamage;
 Handle g_DHookWeaponSendAnim;
 Handle g_DHookGrenadeInit;
 Handle g_DHookGrenadeGetDamageRadius;
+Handle g_DHookGrenadeExplode;
 Handle g_DHookWeaponGetProjectileSpeed;
 Handle g_DHookWeaponGetInitialAfterburn;
 Handle g_DHookFireJar;
@@ -87,6 +88,8 @@ enum eTFProjectileOverride {
 	Projectile_JarGas = 29,
 }
 
+int offs_CTFWeaponBaseGrenadeProj_flDetonateTime;
+
 public void OnPluginStart() {
 	Handle hGameConf = LoadGameConfigFile("tf2.attribute_support");
 	if (!hGameConf) {
@@ -114,6 +117,8 @@ public void OnPluginStart() {
 	
 	g_DHookGrenadeInit = DHookCreateFromConf(hGameConf,
 			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
+	
+	g_DHookGrenadeExplode = DHookCreateFromConf(hGameConf, "CBaseGrenade::Explode()");
 	
 	g_DHookPlayerRegenerate = DHookCreateFromConf(hGameConf, "CTFPlayer::Regenerate()");
 	DHookEnableDetour(g_DHookPlayerRegenerate, true, OnPlayerRegeneratePost);
@@ -144,6 +149,12 @@ public void OnPluginStart() {
 			"CTFWeaponBase::InternalGetEffectBarRechargeTime()");
 	PrepSDKCall_SetReturnInfo(SDKType_Float, SDKPass_Plain);
 	g_SDKCallInternalGetEffectBarRechargeTime = EndPrepSDKCall();
+	
+	
+	int offs_CTFWeaponBaseGrenadeProj_bCritical =
+			FindSendPropInfo("CTFWeaponBaseGrenadeProj", "m_bCritical");
+	
+	offs_CTFWeaponBaseGrenadeProj_flDetonateTime = offs_CTFWeaponBaseGrenadeProj_bCritical - 9;
 	
 	delete hGameConf;
 	
@@ -209,6 +220,7 @@ public void OnEntityCreated(int entity, const char[] className) {
 	if (strncmp(className, "tf_projectile_jar", strlen("tf_projectile_jar")) == 0) {
 		DHookEntity(g_DHookGrenadeGetDamageRadius, true, entity,
 				.callback = OnGetGrenadeDamageRadiusPost);
+		DHookEntity(g_DHookGrenadeExplode, false, entity, .callback = OnGrenadeExplode);
 	}
 	if (StrEqual(className, "tf_projectile_flare")) {
 		DHookEntity(g_DHookRocketExplode, true, entity, .callback = OnRocketExplodePost);
@@ -222,7 +234,8 @@ public void OnEntityCreated(int entity, const char[] className) {
 	}
 	
 	if (strncmp(className, "tf_projectile_pipe", strlen("tf_projectile_pipe")) == 0) {
-		DHookEntity(g_DHookGrenadeInit, true, entity, .callback = OnGrenadeInit);
+		DHookEntity(g_DHookGrenadeInit, false, entity, .callback = OnGrenadeInit);
+		DHookEntity(g_DHookGrenadeExplode, true, entity, .callback = OnGrenadeExplode);
 	}
 }
 
@@ -427,6 +440,21 @@ MRESReturn OnGrenadeInit(int grenade, Handle hParams) {
 	return MRES_Ignored;
 }
 
+MRESReturn OnGrenadeExplode(int grenade, Handle hParams) {
+	if (GetGameTime() > GetEntDataFloat(grenade, offs_CTFWeaponBaseGrenadeProj_flDetonateTime)) {
+		// detonate time is in the future (FLT_MAX * fuse_mult) if manually detonated
+		// if detonated via sticky limit, it will be in the past instead
+		// we check this as the latter will also allow smoke explosions
+		return MRES_Ignored;
+	}
+	int weapon = GetEntPropEnt(grenade, Prop_Send, "m_hOriginalLauncher");
+	if (IsValidEntity(weapon) &&
+			TF2Attrib_HookValueInt(0, "use_large_smoke_explosion", weapon)) {
+		CreateLargeSmokeExplosion(grenade);
+	}
+	return MRES_Ignored;
+}
+
 /**
  * Patches unsupported weapons' projectile speed getters based on "override projectile type"
  */
@@ -485,15 +513,7 @@ MRESReturn OnRocketExplodePost(int rocket, Handle hParams) {
 	int owner = TF2_GetEntityOwner(rocket);
 	if (0 < owner < MaxClients
 			&& TF2Attrib_HookValueInt(0, "use_large_smoke_explosion", owner)) {
-		float origin[3], angles[3];
-		GetEntPropVector(rocket, Prop_Data, "m_vecAbsOrigin", origin);
-		GetEntPropVector(rocket, Prop_Data, "m_angAbsRotation", angles);
-		
-		TE_SetupTFParticleEffect("explosionTrail_seeds_mvm", origin, .vecAngles = angles);
-		TE_SendToAll();
-		
-		TE_SetupTFParticleEffect("fluidSmokeExpl_ring_mvm", origin, .vecAngles = angles);
-		TE_SendToAll();
+		CreateLargeSmokeExplosion(rocket);
 	}
 	return MRES_Ignored;
 }
@@ -699,4 +719,16 @@ float GetEffectBarRechargeTime(int entity) {
 	}
 	float flRechargeTime = SDKCall(g_SDKCallInternalGetEffectBarRechargeTime, entity);
 	return TF2Attrib_HookValueFloat(flRechargeTime, "effectbar_recharge_rate", entity);
+}
+
+void CreateLargeSmokeExplosion(int entity) {
+	float origin[3], angles[3];
+	GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", origin);
+	GetEntPropVector(entity, Prop_Data, "m_angAbsRotation", angles);
+	
+	TE_SetupTFParticleEffect("explosionTrail_seeds_mvm", origin, .vecAngles = angles);
+	TE_SendToAll();
+	
+	TE_SetupTFParticleEffect("fluidSmokeExpl_ring_mvm", origin, .vecAngles = angles);
+	TE_SendToAll();
 }
