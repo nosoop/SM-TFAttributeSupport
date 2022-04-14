@@ -20,7 +20,7 @@
 
 #include <tf2attributes>
 
-#define PLUGIN_VERSION "1.6.0"
+#define PLUGIN_VERSION "1.6.1"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -222,7 +222,8 @@ public void OnEntityCreated(int entity, const char[] className) {
 	}
 	
 	if (strncmp(className, "tf_projectile_pipe", strlen("tf_projectile_pipe")) == 0) {
-		DHookEntity(g_DHookGrenadeInit, true, entity, .callback = OnGrenadeInit);
+		// unused. crashes inconsistently, because of course, virtual dhooks
+		// DHookEntity(g_DHookGrenadeInit, false, entity, .callback = OnGrenadeInit);
 	}
 }
 
