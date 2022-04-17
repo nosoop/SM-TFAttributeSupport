@@ -45,11 +45,13 @@ owner deals damage.
 ## Dependencies
 
 Requires my personal fork of [TF2Attributes][], which exposes the game's attribute value hooks
-as native functions for plugins to use.
+as native functions for plugins to use, and [TF2Utils][], which provides common gameplay-related
+functions for plugins to work with.
 
 This also needs the [detour-supporting version of DHooks][dynhooks].
 
 [TF2Attributes]: https://github.com/nosoop/tf2attributes
+[TF2Utils]: https://github.com/nosoop/SM-TFUtils
 [dynhooks]: https://forums.alliedmods.net/showpost.php?p=2588686&postcount=589
 [sigsegv's documentation on item meters]: https://gist.github.com/sigsegv-mvm/43e76b30cedca0717e88988ac9172526
 [Custom Weapons X]: https://github.com/nosoop/SM-TFCustomWeaponsX

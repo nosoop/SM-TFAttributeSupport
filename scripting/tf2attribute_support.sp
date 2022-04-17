@@ -19,8 +19,9 @@
 #pragma newdecls required
 
 #include <tf2attributes>
+#include <tf2utils>
 
-#define PLUGIN_VERSION "1.6.1"
+#define PLUGIN_VERSION "1.7.0"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -41,8 +42,6 @@ Handle g_DHookRocketExplode;
 Handle g_DHookPlayerRegenerate;
 
 Handle g_SDKCallBaseWeaponSendAnim;
-Handle g_SDKCallIsBaseEntityWeapon;
-Handle g_SDKCallGetPlayerShootPosition;
 Handle g_SDKCallInitGrenade;
 Handle g_SDKCallInternalGetEffectBarRechargeTime;
 
@@ -120,17 +119,6 @@ public void OnPluginStart() {
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
-			"CBaseCombatWeapon::IsBaseCombatWeapon()");
-	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
-	g_SDKCallIsBaseEntityWeapon = EndPrepSDKCall();
-	
-	StartPrepSDKCall(SDKCall_Player);
-	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual, "CBasePlayer::Weapon_ShootPosition()");
-	PrepSDKCall_SetReturnInfo(SDKType_Vector, SDKPass_ByValue);
-	g_SDKCallGetPlayerShootPosition = EndPrepSDKCall();
-	
-	StartPrepSDKCall(SDKCall_Entity);
-	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
 			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
 	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_Pointer);
 	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_Pointer);
@@ -161,7 +149,7 @@ public void OnMapStart() {
 			continue;
 		}
 		
-		if (IsEntityWeapon(entity)) {
+		if (TF2Util_IsEntityWeapon(entity)) {
 			HookWeaponBase(entity);
 		}
 		if (IsWeaponBaseGun(entity)) {
@@ -214,7 +202,7 @@ public void OnEntityCreated(int entity, const char[] className) {
 		DHookEntity(g_DHookRocketExplode, true, entity, .callback = OnRocketExplodePost);
 	}
 	
-	if (IsEntityWeapon(entity)) {
+	if (TF2Util_IsEntityWeapon(entity)) {
 		HookWeaponBase(entity);
 	}
 	if (IsWeaponBaseGun(entity)) {
@@ -533,7 +521,7 @@ public MRESReturn OnFireJarPre(int weapon, Handle hReturn, Handle hParams) {
 	}
 	
 	float vecSpawnOrigin[3];
-	GetPlayerShootPosition(owner, vecSpawnOrigin);
+	TF2Util_GetPlayerShootPosition(owner, vecSpawnOrigin);
 	
 	float angEyes[3], vecEyeForward[3], vecEyeRight[3], vecEyeUp[3];
 	
@@ -586,7 +574,7 @@ public MRESReturn OnFireJarPre(int weapon, Handle hReturn, Handle hParams) {
  * Checks if the given weapon should have their charge meter zeroed out during spawn.
  */
 void PostSpawnUnsetItemCharge(int weapon) {
-	if (!IsEntityWeapon(weapon)) {
+	if (!TF2Util_IsEntityWeapon(weapon)) {
 		return;
 	} else if (TF2Attrib_HookValueInt(0, "item_meter_resupply_denied", weapon) <= 0) {
 		// item charges are only unset during spawn when item_meter_resupply_denied > 0
@@ -612,7 +600,7 @@ void PostSpawnUnsetItemCharge(int weapon) {
  * Checks if the given weapon is recharging; if so, prevent ammo bring granted.
  */
 void ProcessItemRecharge(int weapon) {
-	if (!IsEntityWeapon(weapon)) {
+	if (!TF2Util_IsEntityWeapon(weapon)) {
 		return;
 	} else if (TF2Attrib_HookValueInt(0, "item_meter_resupply_denied", weapon) == 0) {
 		// item charges are only unset on resupply when item_meter_resupply_denied != 0
@@ -646,7 +634,7 @@ void ProcessItemRecharge(int weapon) {
  * item_meter_damage_for_full_charge attributes.
  */
 void ApplyItemChargeDamageModifier(int weapon, float flDamage) {
-	if (!IsEntityWeapon(weapon)) {
+	if (!TF2Util_IsEntityWeapon(weapon)) {
 		return;
 	} else if (TF2Attrib_HookValueInt(0, "item_meter_charge_type", weapon)
 			& ITEM_METER_CHARGE_BY_DAMAGE == 0) {
@@ -682,20 +670,13 @@ static bool IsWeaponBaseGun(int entity) {
 	return HasEntProp(entity, Prop_Data, "CTFWeaponBaseGunZoomOutIn");
 }
 
-void GetPlayerShootPosition(int client, float vecShootPosition[3]) {
-	SDKCall(g_SDKCallGetPlayerShootPosition, client, vecShootPosition);
-}
 
 bool SendWeaponAnim(int weapon, int activity) {
 	return SDKCall(g_SDKCallBaseWeaponSendAnim, weapon, activity);
 }
 
-bool IsEntityWeapon(int entity) {
-	return SDKCall(g_SDKCallIsBaseEntityWeapon, entity);
-}
-
 float GetEffectBarRechargeTime(int entity) {
-	if (!IsEntityWeapon(entity)) {
+	if (!TF2Util_IsEntityWeapon(entity)) {
 		ThrowError("Entity %d is not a weapon", entity);
 	}
 	float flRechargeTime = SDKCall(g_SDKCallInternalGetEffectBarRechargeTime, entity);

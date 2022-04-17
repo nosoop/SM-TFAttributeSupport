@@ -125,11 +125,6 @@
 		}
 		"Offsets"
 		{
-			"CBaseCombatWeapon::IsBaseCombatWeapon()"
-			{
-				"windows"	"89"
-				"linux"		"90"
-			}
 			"CBaseCombatWeapon::SendWeaponAnim()"
 			{
 				"windows"	"246"
@@ -144,11 +139,6 @@
 			{
 				"windows"	"238"
 				"linux"		"239"
-			}
-			"CBasePlayer::Weapon_ShootPosition()"
-			{
-				"windows"	"272"
-				"linux"		"273"
 			}
 			"CTFBaseRocket::Explode()"
 			{
