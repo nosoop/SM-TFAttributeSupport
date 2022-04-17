@@ -35,7 +35,6 @@ Handle g_DHookWeaponSendAnim;
 Handle g_DHookGrenadeInit;
 Handle g_DHookGrenadeGetDamageRadius;
 Handle g_DHookWeaponGetProjectileSpeed;
-Handle g_DHookWeaponGetInitialAfterburn;
 Handle g_DHookFireJar;
 Handle g_DHookRocketExplode;
 
@@ -44,6 +43,8 @@ Handle g_DHookPlayerRegenerate;
 Handle g_SDKCallBaseWeaponSendAnim;
 Handle g_SDKCallInitGrenade;
 Handle g_SDKCallInternalGetEffectBarRechargeTime;
+
+Handle g_SDKCallGetWeaponAfterburnRate;
 
 int voffs_SendWeaponAnim;
 
@@ -101,9 +102,6 @@ public void OnPluginStart() {
 	g_DHookGrenadeGetDamageRadius = DHookCreateFromConf(hGameConf,
 			"CBaseGrenade::GetDamageRadius()");
 	
-	g_DHookWeaponGetInitialAfterburn = DHookCreateFromConf(hGameConf,
-			"CTFWeaponBase::GetInitialAfterburnDuration()");
-	
 	g_DHookWeaponGetProjectileSpeed = DHookCreateFromConf(hGameConf,
 			"CTFWeaponBaseGun::GetProjectileSpeed()");
 	
@@ -132,6 +130,12 @@ public void OnPluginStart() {
 			"CTFWeaponBase::InternalGetEffectBarRechargeTime()");
 	PrepSDKCall_SetReturnInfo(SDKType_Float, SDKPass_Plain);
 	g_SDKCallInternalGetEffectBarRechargeTime = EndPrepSDKCall();
+	
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
+			"CTFWeaponBase::GetAfterburnRateOnHit()");
+	PrepSDKCall_SetReturnInfo(SDKType_Float, SDKPass_Plain);
+	g_SDKCallGetWeaponAfterburnRate = EndPrepSDKCall();
 	
 	delete hGameConf;
 	
@@ -244,12 +248,17 @@ void OnClientTakeDamageAlivePost(int victim, int attacker, int inflictor, float 
 		return;
 	}
 	
-	// the 'correct' way would be to implement this within `CTFPlayer::OnDamageDealt()`
 	for (int i; i < 3; i++) {
 		int attackerWeapon = GetPlayerWeaponSlot(attacker, i);
 		if (IsValidEntity(attackerWeapon)) {
+			// the 'correct' way would be to implement this within `CTFPlayer::OnDamageDealt()`
 			ApplyItemChargeDamageModifier(attackerWeapon, damage);
 		}
+	}
+	
+	if (damagecustom != TF_CUSTOM_BURNING) {
+		// this should not be triggered on DOT effects
+		ApplyItemBurnModifier(weapon, victim);
 	}
 }
 
@@ -312,8 +321,7 @@ MRESReturn OnPlayerRegeneratePost(int client, Handle hParams) {
 }
 
 static MRESReturn HookWeaponBase(int entity) {
-	DHookEntity(g_DHookWeaponGetInitialAfterburn, true, entity,
-			.callback = OnGetInitialAfterburnPost);
+	// currently stubbed
 }
 
 static void HookWeaponBaseGun(int entity, const char[] className) {
@@ -459,15 +467,6 @@ public MRESReturn OnGetProjectileSpeedPost(int weapon, Handle hReturn) {
 		return MRES_Supercede;
 	}
 	return MRES_Ignored;
-}
-
-MRESReturn OnGetInitialAfterburnPost(int weapon, Handle hReturn) {
-	if (DHookGetReturn(hReturn)) {
-		return MRES_Ignored;
-	}
-	float flAfterburn = TF2Attrib_HookValueFloat(0.0, "set_dmgtype_ignite", weapon);
-	DHookSetReturn(hReturn, flAfterburn);
-	return MRES_Override;
 }
 
 MRESReturn OnRocketExplodePost(int rocket, Handle hParams) {
@@ -664,12 +663,34 @@ void ApplyItemChargeDamageModifier(int weapon, float flDamage) {
 }
 
 /**
+ * Reset the given burn timer based on `set_dmgtype_ignite`.
+ */
+void ApplyItemBurnModifier(int weapon, int victim) {
+	if (GetWeaponAfterburnRateOnHit(weapon) > 0.0
+			|| !TF2_IsPlayerInCondition(victim, TFCond_OnFire)) {
+		// this item has an afterburn on hit that we shouldn't override, or isn't on fire
+		// (they should've been set on fire due to set_dmgtype_ignite)
+		return;
+	}
+	float burnTime = TF2Attrib_HookValueFloat(0.0, "set_dmgtype_ignite", weapon);
+	
+	// we use TF2_IgnitePlayer here to enforce the 10 second duration limit
+	// otherwise, if the duration exceeds the limit, a "normal" weapon that ignites will cause
+	// the game to limit the afterburn again
+	int attacker = TF2Util_GetPlayerConditionProvider(victim, TFCond_OnFire);
+	TF2_IgnitePlayer(victim, attacker, burnTime);
+}
+
+/**
  * Kludge to detect CTFWeaponBaseGun-derived entities.
  */
 static bool IsWeaponBaseGun(int entity) {
 	return HasEntProp(entity, Prop_Data, "CTFWeaponBaseGunZoomOutIn");
 }
 
+float GetWeaponAfterburnRateOnHit(int weapon) {
+	return SDKCall(g_SDKCallGetWeaponAfterburnRate, weapon);
+}
 
 bool SendWeaponAnim(int weapon, int activity) {
 	return SDKCall(g_SDKCallBaseWeaponSendAnim, weapon, activity);
