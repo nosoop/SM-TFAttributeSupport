@@ -21,7 +21,7 @@
 #include <tf2attributes>
 #include <tf2utils>
 
-#define PLUGIN_VERSION "1.7.0"
+#define PLUGIN_VERSION "1.7.1"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -256,7 +256,8 @@ void OnClientTakeDamageAlivePost(int victim, int attacker, int inflictor, float 
 		}
 	}
 	
-	if (damagecustom != TF_CUSTOM_BURNING) {
+	if (damagecustom != TF_CUSTOM_BURNING && IsValidEntity(weapon)
+			&& TF2Util_IsEntityWeapon(weapon)) {
 		// this should not be triggered on DOT effects
 		ApplyItemBurnModifier(weapon, victim);
 	}
