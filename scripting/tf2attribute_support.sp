@@ -21,7 +21,7 @@
 #include <tf2attributes>
 #include <tf2utils>
 
-#define PLUGIN_VERSION "1.7.1"
+#define PLUGIN_VERSION "1.7.2"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -239,23 +239,27 @@ void OnClientSpawnPost(int client) {
 }
 
 /**
- * Called when a player takes damage.  Attacker gains charge on legacy item meters.
+ * Called when a player takes damage.
  */
 void OnClientTakeDamageAlivePost(int victim, int attacker, int inflictor, float damage,
 		int damagetype, int weapon, const float damageForce[3], const float damagePosition[3],
 		int damagecustom) {
-	if (attacker < 1 || attacker >= MaxClients || attacker == victim) {
+	if (attacker < 1 || attacker >= MaxClients) {
 		return;
 	}
 	
-	for (int i; i < 3; i++) {
-		int attackerWeapon = GetPlayerWeaponSlot(attacker, i);
-		if (IsValidEntity(attackerWeapon)) {
-			// the 'correct' way would be to implement this within `CTFPlayer::OnDamageDealt()`
-			ApplyItemChargeDamageModifier(attackerWeapon, damage);
+	if (attacker != victim) {
+		// attacker gains charge on legacy meters on non-self damage
+		for (int i; i < 3; i++) {
+			int attackerWeapon = GetPlayerWeaponSlot(attacker, i);
+			if (IsValidEntity(attackerWeapon)) {
+				// the 'correct' way would be to implement this within `CTFPlayer::OnDamageDealt()`
+				ApplyItemChargeDamageModifier(attackerWeapon, damage);
+			}
 		}
 	}
 	
+	// modify victim burning duration, even on self-hits
 	if (damagecustom != TF_CUSTOM_BURNING && IsValidEntity(weapon)
 			&& TF2Util_IsEntityWeapon(weapon)) {
 		// this should not be triggered on DOT effects
@@ -673,13 +677,19 @@ void ApplyItemBurnModifier(int weapon, int victim) {
 		// (they should've been set on fire due to set_dmgtype_ignite)
 		return;
 	}
-	float burnTime = TF2Attrib_HookValueFloat(0.0, "set_dmgtype_ignite", weapon);
 	
-	// we use TF2_IgnitePlayer here to enforce the 10 second duration limit
-	// otherwise, if the duration exceeds the limit, a "normal" weapon that ignites will cause
-	// the game to limit the afterburn again
-	int attacker = TF2Util_GetPlayerConditionProvider(victim, TFCond_OnFire);
-	TF2_IgnitePlayer(victim, attacker, burnTime);
+	float burnTime = TF2Attrib_HookValueFloat(0.0, "set_dmgtype_ignite", weapon);
+	if (burnTime > 10.0) {
+		// hack to limit the burn duration as the game does, for now
+		// ideally we would call into `TF2_IgnitePlayer` (which calls `CTFPlayerShared::Burn`),
+		// but that doesn't take a weapon - maybe this is something that can go in tf2utils
+		burnTime = 10.0;
+	}
+	
+	float currentBurnTime = TF2Util_GetPlayerBurnDuration(victim);
+	if (burnTime > currentBurnTime) {
+		TF2Util_SetPlayerBurnDuration(victim, burnTime);
+	}
 }
 
 /**
