@@ -64,6 +64,13 @@
 					}
 				}
 			}
+			"CTFPlayer::CanAirDash()"
+			{
+				"signature"		"CTFPlayer::CanAirDash()"
+				"callconv"		"thiscall"
+				"this"			"entity"
+				"return"		"bool"
+			}
 			"CTFWeaponBase::GetInitialAfterburnDuration()"
 			{
 				"offset"		"CTFWeaponBase::GetInitialAfterburnDuration()"
@@ -121,6 +128,24 @@
 						"type"	"float"
 					}
 				}
+			}
+		}
+		"MemPatches"
+		{
+			"CTFPlayer::CanAirDash()::PatchRequiredDeployTime"
+			{
+				"signature"		"CTFPlayer::CanAirDash()"
+				"linux"
+				{
+					"offset"	"126h"
+				}
+				"windows"
+				{
+					"offset"	"AAh"
+				}
+				"verify"	"\xF3\x0F\x10\x2A\x2A\x2A\x2A\x2A"
+				"patch"		"\xF3\x0F\x10\x00\x00\x00\x00\x00"
+				"preserve"	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 			}
 		}
 		"Offsets"
@@ -184,6 +209,13 @@
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer10RegenerateEb"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x53\x56\x57\x8B\xF9\x8B\x07"
+			}
+			"CTFPlayer::CanAirDash()"
+			{
+				// unique x-ref to string 'set_scout_doublejump_disabled'
+				"library"	"server"
+				"linux"		"@_ZNK9CTFPlayer10CanAirDashEv"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x08\x57\x8B\xF9\xF7\x87\x2A\x2A\x00\x00\x00\x00\x04\x00"
 			}
 		}
 	}

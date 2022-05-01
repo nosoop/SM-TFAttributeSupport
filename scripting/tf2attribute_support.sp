@@ -18,10 +18,11 @@
 
 #pragma newdecls required
 
+#include <sourcescramble>
 #include <tf2attributes>
 #include <tf2utils>
 
-#define PLUGIN_VERSION "1.7.2"
+#define PLUGIN_VERSION "1.8.0"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -54,8 +55,12 @@ int voffs_SendWeaponAnim;
 // this is dynamically set based on CTFWeaponInfo::m_flDamageRadius, but we'll just define it
 #define TF_DMGRADIUS_GRENADE_LAUNCHER            146.0
 
+#define DEFAULT_REQUIRED_DEPLOY_FOR_AIR_DASH     0.7
+
 #define ITEM_METER_CHARGE_OVER_TIME (1 << 0)
 #define ITEM_METER_CHARGE_BY_DAMAGE (1 << 1)
+
+float g_flAirDashDeployTime;
 
 enum eTFProjectileOverride {
 	Projectile_Bullet = 1,
@@ -115,6 +120,12 @@ public void OnPluginStart() {
 	g_DHookPlayerRegenerate = DHookCreateFromConf(hGameConf, "CTFPlayer::Regenerate()");
 	DHookEnableDetour(g_DHookPlayerRegenerate, true, OnPlayerRegeneratePost);
 	
+	Handle dtPlayerCanAirDash = DHookCreateFromConf(hGameConf, "CTFPlayer::CanAirDash()");
+	if (!dtPlayerCanAirDash) {
+		SetFailState("Failed to create detour " ... "CTFPlayer::CanAirDash()");
+	}
+	DHookEnableDetour(dtPlayerCanAirDash, false, OnPlayerCanAirDashPre);
+	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
 			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
@@ -136,6 +147,28 @@ public void OnPluginStart() {
 			"CTFWeaponBase::GetAfterburnRateOnHit()");
 	PrepSDKCall_SetReturnInfo(SDKType_Float, SDKPass_Plain);
 	g_SDKCallGetWeaponAfterburnRate = EndPrepSDKCall();
+	
+	MemoryPatch patchAirDashDeployTime = MemoryPatch.CreateFromConf(hGameConf,
+			"CTFPlayer::CanAirDash()::PatchRequiredDeployTime");
+	if (!patchAirDashDeployTime.Validate()) {
+		SetFailState("Failed to validate patch "
+				... "CTFPlayer::CanAirDash()::PatchRequiredDeployTime");
+	}
+	patchAirDashDeployTime.Enable();
+	
+	Address ppValue = patchAirDashDeployTime.Address + view_as<Address>(4);
+	Address pValue = DereferencePointer(ppValue);
+	float value = view_as<float>(LoadFromAddress(pValue, NumberType_Int32));
+	if (value != DEFAULT_REQUIRED_DEPLOY_FOR_AIR_DASH) {
+		SetFailState("Unexpected value being overwritten for "
+				... "CTFPlayer::CanAirDash()::PatchRequiredDeployTime "
+				... "(expected %.2f, got %.2f / %08x)", DEFAULT_REQUIRED_DEPLOY_FOR_AIR_DASH,
+				value, value);
+	}
+	g_flAirDashDeployTime = value;
+	
+	StoreToAddress(ppValue, view_as<any>(GetAddressOfCell(g_flAirDashDeployTime)),
+			NumberType_Int32);
 	
 	delete hGameConf;
 	
@@ -327,6 +360,21 @@ MRESReturn OnPlayerRegeneratePost(int client, Handle hParams) {
 
 static MRESReturn HookWeaponBase(int entity) {
 	// currently stubbed
+}
+
+MRESReturn OnPlayerCanAirDashPre(int client) {
+	g_flAirDashDeployTime = DEFAULT_REQUIRED_DEPLOY_FOR_AIR_DASH;
+	
+	int activeWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+	if (!IsValidEntity(activeWeapon)) {
+		return MRES_Ignored;
+	}
+	
+	// doesn't quite cover every single deploy time-related attribute, but this will do for now
+	g_flAirDashDeployTime *=
+			TF2Attrib_HookValueFloat(1.0, "mult_deploy_time", activeWeapon)
+			* TF2Attrib_HookValueFloat(1.0, "mult_single_wep_deploy_time", activeWeapon);
+	return MRES_Ignored;
 }
 
 static void HookWeaponBaseGun(int entity, const char[] className) {
