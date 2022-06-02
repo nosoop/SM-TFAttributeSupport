@@ -22,7 +22,7 @@
 #include <tf2attributes>
 #include <tf2utils>
 
-#define PLUGIN_VERSION "1.8.0"
+#define PLUGIN_VERSION "1.9.0"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -125,6 +125,23 @@ public void OnPluginStart() {
 		SetFailState("Failed to create detour " ... "CTFPlayer::CanAirDash()");
 	}
 	DHookEnableDetour(dtPlayerCanAirDash, false, OnPlayerCanAirDashPre);
+	
+	Handle dtSharedPlayerRemoveAttribute = DHookCreateFromConf(hGameConf,
+			"CTFPlayerShared::RemoveAttributeFromPlayer()");
+	if (!dtSharedPlayerRemoveAttribute) {
+		SetFailState("Failed to create detour CTFPlayerShared::RemoveAttributeFromPlayer()");
+	}
+	DHookEnableDetour(dtSharedPlayerRemoveAttribute, true, OnPlayerAttributesChangedPost);
+	
+	Handle dtSharedPlayerApplyAttribute = DHookCreateFromConf(hGameConf,
+			"CTFPlayerShared::ApplyAttributeToPlayer()");
+	if (!dtSharedPlayerApplyAttribute) {
+		SetFailState("Failed to create detour CTFPlayerShared::ApplyAttributeToPlayer()");
+	}
+	// while we could (should?) handle the apply side in tf2attributes, it doesn't have any
+	// knowledge of player equipment nor the speed refresh logic.  so we might as well put both
+	// of them here for consistency's sake
+	DHookEnableDetour(dtSharedPlayerApplyAttribute, true, OnPlayerAttributesChangedPost);
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
@@ -620,6 +637,29 @@ public MRESReturn OnFireJarPre(int weapon, Handle hReturn, Handle hParams) {
 	
 	DHookSetReturn(hReturn, false);
 	return MRES_Supercede;
+}
+
+/**
+ * Forces a cache refresh on a player's items when an attribute has been added / removed from
+ * the player.  This fixes issues with weapon-centric attributes like reloading multipliers.
+ */
+MRESReturn OnPlayerAttributesChangedPost(Address pShared, Handle hParams) {
+	int client = TF2Util_GetPlayerFromSharedAddress(pShared);
+	for (int i; i < 5; i++) {
+		int weapon = GetPlayerWeaponSlot(client, i);
+		if (IsValidEntity(weapon)) {
+			TF2Attrib_ClearCache(weapon);
+		}
+	}
+	
+	for (int i, n = TF2Util_GetPlayerWearableCount(client); i < n; i++) {
+		int wearable = TF2Util_GetPlayerWearable(client, i);
+		if (IsValidEntity(wearable)) {
+			TF2Attrib_ClearCache(wearable);
+		}
+	}
+	
+	TF2Util_UpdatePlayerSpeed(client);
 }
 
 /**

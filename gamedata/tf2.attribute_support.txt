@@ -71,6 +71,38 @@
 				"this"			"entity"
 				"return"		"bool"
 			}
+			"CTFPlayerShared::ApplyAttributeToPlayer()"
+			{
+				"signature"		"CTFPlayerShared::ApplyAttributeToPlayer()"
+				"callconv"		"thiscall"
+				"this"			"address"
+				"return"		"void"
+				"arguments"
+				{
+					"name"
+					{
+						"type"	"charptr"
+					}
+					"value"
+					{
+						"type"	"float"
+					}
+				}
+			}
+			"CTFPlayerShared::RemoveAttributeFromPlayer()"
+			{
+				"signature"		"CTFPlayerShared::RemoveAttributeFromPlayer()"
+				"callconv"		"thiscall"
+				"this"			"address"
+				"return"		"void"
+				"arguments"
+				{
+					"name"
+					{
+						"type"	"charptr"
+					}
+				}
+			}
 			"CTFWeaponBase::GetInitialAfterburnDuration()"
 			{
 				"offset"		"CTFWeaponBase::GetInitialAfterburnDuration()"
@@ -216,6 +248,21 @@
 				"library"	"server"
 				"linux"		"@_ZNK9CTFPlayer10CanAirDashEv"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x08\x57\x8B\xF9\xF7\x87\x2A\x2A\x00\x00\x00\x00\x04\x00"
+			}
+			"CTFPlayerShared::ApplyAttributeToPlayer()"
+			{
+				// we use this to avoid stomping on the signature for CTFPlayer::AddCustomAttribute
+				"library"	"server"
+				"linux"		"@_ZN15CTFPlayerShared22ApplyAttributeToPlayerEPKcf"
+				"windows"	"\x55\x8B\xEC\x56\xFF\x75\x08\x8B\xF1\xE8\x2A\x2A\x2A\x2A\x8B\xC8\xE8\x2A\x2A\x2A\x2A\x8B\x8E\x2A\x2A\x00\x00\xD9\x45\x0C"
+			}
+			"CTFPlayerShared::RemoveAttributeFromPlayer()"
+			{
+				// we use this to avoid stomping on the signature for CTFPlayer::RemoveCustomAttribute
+				// really should've been backported to 1.10 fgsfds
+				"library"	"server"
+				"linux"		"@_ZN15CTFPlayerShared25RemoveAttributeFromPlayerEPKc"
+				"windows"	"\x55\x8B\xEC\x56\xFF\x75\x08\x8B\xF1\xE8\x2A\x2A\x2A\x2A\x8B\xC8\xE8\x2A\x2A\x2A\x2A\x8B\x8E\x2A\x2A\x00\x00\x81\xC1\x2A\x2A\x00\x00"
 			}
 		}
 	}

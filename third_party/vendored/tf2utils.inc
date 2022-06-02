@@ -132,9 +132,83 @@ native float TF2Util_GetPlayerBurnDuration(int client);
 native void TF2Util_SetPlayerBurnDuration(int client, float duration);
 
 /**
+ * Sets a client on fire.  This is effectively the same as `TF2_IgnitePlayer` but with the
+ * additional ability to set the weapon (allowing attribute modifiers to take effect).
+ * 
+ * @param client      Target client index.
+ * @param attacker    Attacker client index, or INVALID_ENT_REFERENCE for none.
+ * @param duration    Duration of fire, in seconds.
+ * @param weapon      Weapon entity, or INVALID_ENT_REFERENCE for none.
+ * 
+ * @note              As of Jungle Inferno, fire duration is capped to 10 seconds.
+ * @error             Invalid clients, or non-weapon entity.
+ */
+native void TF2Util_IgnitePlayer(int client, int attacker, float duration,
+		int weapon = INVALID_ENT_REFERENCE);
+
+/**
+ * Returns true if the given player is immune to pushback.
+ * 
+ * @param client    Client index.
+ * 
+ * @error           Invalid client or not in game.
+ */
+native bool TF2Util_IsPlayerImmuneToPushback(int client);
+
+/**
+ * Returns the player's respawn time override, if any.  This is the number of seconds that a
+ * player will spend waiting to be respawned after their last death (CTFPlayer::m_flDeathTime).
+ * 
+ * When a player dies, the game will set this value to -1.0 or the RespawnTime value of an
+ * active trigger_player_respawn_override entity that the player died in, if one exists.
+ * (This happens *after* the `player_death` event is fired, so you cannot retrieve their respawn
+ * time override during a hook on that event.)
+ * 
+ * The amount of time remaining can be computed as follows:
+ * 
+ *     flRemainingTime = flDeathTime + flRespawnTimeOverride - GetGameTime();
+ * 
+ * If the player does not have an override on their respawn time (i.e. they are part of normal
+ * respawn waves), this will return -1.0.  If the player is alive, this will return whatever is
+ * stored on the entity (normally -1.0), and *not* any buffered value that was set using
+ * `TF2Util_SetPlayerRespawnTimeOverride`.
+ * 
+ * @error Invalid client.
+ */
+native float TF2Util_GetPlayerRespawnTimeOverride(int client);
+
+/**
+ * Changes the player's respawn time override.  See `TF2Util_GetPlayerRespawnTimeOverride` above
+ * for an explanation of the value.
+ * 
+ * If the player is not alive, setting this value to -1.0 will remove any existing respawn time
+ * overrides, and the player will respawn in the next wave they are allowed to spawn in.
+ * 
+ * If the player is alive, setting this value to one other than -1.0 will cause TF2Utils to
+ * buffer the value and update the player's respawn time override at some point after they die
+ * (allowing plugins to set a respawn time override while the player is alive or during a
+ * `player_death` event hook).
+ * 
+ * @error Invalid client.
+ */
+native void TF2Util_SetPlayerRespawnTimeOverride(int client, float time);
+
+/**
  * Returns the player's shoot position.
  */
 native void TF2Util_GetPlayerShootPosition(int client, float result[3]);
+
+/**
+ * @return Object (building) entity index at the given index.
+ * @error Entity is not a client or index is out of bounds.
+ */
+native int TF2Util_GetPlayerObject(int client, int index);
+
+/**
+ * @return Number of objects (buildings) in a given client's object array.
+ * @error Entity is not a client.
+ */
+native int TF2Util_GetPlayerObjectCount(int client);
 
 /**
  * Returns the healer entity index at the given position in the player's healer array.
@@ -242,8 +316,17 @@ native void TF2Util_UpdatePlayerSpeed(int client, bool immediate = false);
  *                               the position is in an active spawn room.  Has no effect if no
  *                               entity is provided.
  */
-native bool TF2Util_IsPointInRespawnRoom(const float[3] position,
+native bool TF2Util_IsPointInRespawnRoom(const float position[3],
 		int entity = INVALID_ENT_REFERENCE, bool bRestrictToSameTeam = false);
+
+/**
+ * Given the address of a CTFPlayerShared instance, returns the player associated with it.
+ * 
+ * Here be dragons.
+ * 
+ * @param pShared    Address of CTFPlayerShared instance.
+ */
+native int TF2Util_GetPlayerFromSharedAddress(Address pShared);
 
 /**
  * Returns the current maximum health of the player.
