@@ -22,7 +22,7 @@
 #include <tf2attributes>
 #include <tf2utils>
 
-#define PLUGIN_VERSION "1.10.0"
+#define PLUGIN_VERSION "1.10.1"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -63,6 +63,7 @@ int voffs_SendWeaponAnim;
 float g_flAirDashDeployTime;
 
 enum eTFProjectileOverride {
+	Projectile_NoOverride,
 	Projectile_Bullet = 1,
 	Projectile_Rocket = 2,
 	Projectile_Pipebomb = 3,
@@ -656,11 +657,22 @@ public MRESReturn OnFireJarPre(int weapon, Handle hReturn, Handle hParams) {
 MRESReturn OnWeaponBaseVMFlippedPost(int weapon, Handle hReturn) {
 	bool flipped = DHookGetReturn(hReturn);
 	
-	bool invert = false;
+	bool invert;
 	switch (TF2Attrib_HookValueInt(0, "override_projectile_type", weapon)) {
+		case Projectile_NoOverride: {
+			// don't process weapons that have no projectile overrides
+		}
 		case Projectile_CrossbowBolt, Projectile_EnergyBall, Projectile_EnergyRing,
 				Projectile_RescueClaw: {
 			invert = true;
+		}
+		default: {
+			switch (TF2Util_GetWeaponID(weapon)) {
+				case TF_WEAPON_CROSSBOW, TF_WEAPON_DRG_POMSON, TF_WEAPON_PARTICLE_CANNON,
+						TF_WEAPON_SHOTGUN_BUILDING_RESCUE: {
+					invert = true;
+				}
+			}
 		}
 	}
 	
