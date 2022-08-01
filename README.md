@@ -8,12 +8,13 @@ Improves support for:
 
 - Effect radius of Jarate-based entities with blast radius-modifying attributes.
 - Pomson / Righteous Bison projectile speeds and damage amounts.
-- Weapons using the `override projectile type` attribute; projectiles are initialized with the
-correct speed.
-- Improved support for the `override projectile type` attribute
-  - &hellip; enabling players to shoot jar-based projectiles (Jarate, Mad Milk,
+- Weapons using the `override projectile type` attribute:
+  - &hellip; allows players to shoot jar-based projectiles (Jarate, Mad Milk,
   Flying Guillotine, Gas Passer).
   - &hellip; initializing damage radius for grenades spawned by non-grenade launchers.
+  - &hellip; now initialize projectiles with the correct speed.
+  - &hellip; now spawn projectiles on the correct side, taking into account if the viewmodel is
+  flipped internally.
 - Scatterguns can now use the Force-a-Nature's `scattergun has knockback` attribute without any
 animation quirks.
 - Weapons are now able to use `Set DamageType Ignite` again.
@@ -43,6 +44,8 @@ owner deals damage.
   - This portion was sponsored by @JohnnyAlexanderTF2.  Thanks!
 - The delay on being granted triple jumps with the Atomizer now scales with `mult_deploy_time`
 and `mult_single_wep_deploy_time`.
+- The addition / removal of player attributes now clears the attribute cache on the player's
+equipment.
 
 ## Dependencies
 
