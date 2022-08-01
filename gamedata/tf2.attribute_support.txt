@@ -110,6 +110,13 @@
 				"return"		"float"
 				"this"			"entity"
 			}
+			"CTFWeaponBase::IsViewModelFlipped()"
+			{
+				"signature"		"CTFWeaponBase::IsViewModelFlipped()"
+				"callconv"		"thiscall"
+				"this"			"entity"
+				"return"		"bool"
+			}
 			"CTFWeaponBaseGun::FireJar()"
 			{
 				"offset"		"CTFWeaponBaseGun::FireJar()"
@@ -263,6 +270,13 @@
 				"library"	"server"
 				"linux"		"@_ZN15CTFPlayerShared25RemoveAttributeFromPlayerEPKc"
 				"windows"	"\x55\x8B\xEC\x56\xFF\x75\x08\x8B\xF1\xE8\x2A\x2A\x2A\x2A\x8B\xC8\xE8\x2A\x2A\x2A\x2A\x8B\x8E\x2A\x2A\x00\x00\x81\xC1\x2A\x2A\x00\x00"
+			}
+			"CTFWeaponBase::IsViewModelFlipped()"
+			{
+				// unique bytes '8B 16 8B CE 8B 92 ? ? ? ? FF D2 84 C0 74 ? 8A 87 ? ? ? ?' on Windows
+				"library"	"server"
+				"linux"		"@_ZN13CTFWeaponBase18IsViewModelFlippedEv"
+				"windows"	"\x56\x57\x6A\x00\x68\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\x6A\x00\x8B\xF9\xE8\x2A\x2A\x2A\x2A\x50\xE8\x2A\x2A\x2A\x2A\x8B\xF0\x83\xC4\x14\x85\xF6\x74\x2A\x8B\x16"
 			}
 		}
 	}

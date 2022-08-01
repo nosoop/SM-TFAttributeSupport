@@ -22,7 +22,7 @@
 #include <tf2attributes>
 #include <tf2utils>
 
-#define PLUGIN_VERSION "1.9.0"
+#define PLUGIN_VERSION "1.10.0"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -142,6 +142,13 @@ public void OnPluginStart() {
 	// knowledge of player equipment nor the speed refresh logic.  so we might as well put both
 	// of them here for consistency's sake
 	DHookEnableDetour(dtSharedPlayerApplyAttribute, true, OnPlayerAttributesChangedPost);
+	
+	Handle dtWeaponBaseVMFlipped = DHookCreateFromConf(hGameConf,
+			"CTFWeaponBase::IsViewModelFlipped()");
+	if (!dtWeaponBaseVMFlipped) {
+		SetFailState("Failed to create detour " ... "CTFWeaponBase::IsViewModelFlipped()");
+	}
+	DHookEnableDetour(dtWeaponBaseVMFlipped, true, OnWeaponBaseVMFlippedPost);
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
@@ -637,6 +644,31 @@ public MRESReturn OnFireJarPre(int weapon, Handle hReturn, Handle hParams) {
 	
 	DHookSetReturn(hReturn, false);
 	return MRES_Supercede;
+}
+
+/**
+ * Hardcoded lookup table to fix projectiles being shot from the wrong side.  The projectiles
+ * correspond to the weapons that override `IsViewmodelFlipped`.
+ * 
+ * This fix only affects base items - the weapons with flipped viewmodels will still shoot from
+ * the wrong side if their projectile type is overwritten.
+ */
+MRESReturn OnWeaponBaseVMFlippedPost(int weapon, Handle hReturn) {
+	bool flipped = DHookGetReturn(hReturn);
+	
+	bool invert = false;
+	switch (TF2Attrib_HookValueInt(0, "override_projectile_type", weapon)) {
+		case Projectile_CrossbowBolt, Projectile_EnergyBall, Projectile_EnergyRing,
+				Projectile_RescueClaw: {
+			invert = true;
+		}
+	}
+	
+	if (invert) {
+		DHookSetReturn(hReturn, !flipped);
+		return MRES_Override;
+	}
+	return MRES_Ignored;
 }
 
 /**
