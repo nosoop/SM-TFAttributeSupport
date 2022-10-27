@@ -93,6 +93,24 @@ enum eTFProjectileOverride {
 	Projectile_JarGas = 29,
 }
 
+enum MeterType {
+	Meter_Invalid,
+	Meter_PlayerCloakMeter,
+	Meter_PlayerChargeMeter,
+	
+	Meter_WeaponEffectBar,
+}
+
+enum struct MeterInfo {
+	MeterType m_MeterType;
+	int m_hWeapon;
+	
+	// normalized to 0.0 -> 1.0
+	float m_flValue;
+}
+
+ArrayList g_SavedMeters[MAXPLAYERS + 1];
+
 public void OnPluginStart() {
 	Handle hGameConf = LoadGameConfigFile("tf2.attribute_support");
 	if (!hGameConf) {
@@ -119,6 +137,7 @@ public void OnPluginStart() {
 			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
 	
 	g_DHookPlayerRegenerate = DHookCreateFromConf(hGameConf, "CTFPlayer::Regenerate()");
+	DHookEnableDetour(g_DHookPlayerRegenerate, false, OnPlayerRegeneratePre);
 	DHookEnableDetour(g_DHookPlayerRegenerate, true, OnPlayerRegeneratePost);
 	
 	Handle dtPlayerCanAirDash = DHookCreateFromConf(hGameConf, "CTFPlayer::CanAirDash()");
@@ -204,6 +223,7 @@ public void OnPluginStart() {
 	delete hGameConf;
 	
 	for (int i = 1; i <= MaxClients; i++) {
+		g_SavedMeters[i] = new ArrayList(sizeof(MeterInfo));
 		if (IsClientInGame(i)) {
 			OnClientPutInServer(i);
 		}
@@ -371,6 +391,60 @@ void OnClientGroundEntChangedPost(int client) {
 	TE_SendToAll();
 }
 
+MRESReturn OnPlayerRegeneratePre(int client, Handle hParams) {
+	g_SavedMeters[client].Clear();
+	
+	for (int i; i < 5; i++) {
+		int weapon = GetPlayerWeaponSlot(client, i);
+		
+		if (!IsValidEntity(weapon)) {
+			// dumb hack for shield
+			weapon = TF2Util_GetPlayerLoadoutEntity(client, i);
+		}
+		
+		if (!IsValidEntity(weapon)) {
+			continue;
+		}
+		
+		MeterInfo info;
+		info.m_hWeapon = EntIndexToEntRef(weapon);
+		
+		if (TF2Attrib_HookValueInt(0, "item_meter_resupply_denied", weapon) == 0) {
+			// only save the state of the item if value is non-zero
+			continue;
+		}
+		
+		info.m_MeterType = GetItemMeterType(weapon);
+		switch (info.m_MeterType) {
+			case Meter_Invalid: {
+				continue;
+			}
+			case Meter_PlayerChargeMeter: {
+				info.m_flValue = GetEntPropFloat(client, Prop_Send, "m_flChargeMeter") / 100.0;
+			}
+			case Meter_WeaponEffectBar: {
+				float flEffectBarRegenTime = GetEntPropFloat(weapon, Prop_Send,
+						"m_flEffectBarRegenTime");
+				if (TF2_GetWeaponAmmo(info.m_hWeapon)) {
+					info.m_flValue = 1.0;
+				} else if (flEffectBarRegenTime > 0.0) {
+					info.m_flValue = 1.0 - (flEffectBarRegenTime - GetGameTime()) / GetEffectBarRechargeTime(weapon);
+				} else {
+					info.m_flValue = 1.0;
+				}
+			}
+			case Meter_PlayerCloakMeter: {
+				info.m_flValue = GetEntPropFloat(client, Prop_Send, "m_flCloakMeter") / 100.0;
+			}
+		}
+#if defined _DEBUG
+		PrintToServer("preserving slot %d / type: %d / value: %f", i, info.m_MeterType, info.m_flValue);
+#endif
+		g_SavedMeters[client].PushArray(info);
+	}
+	return MRES_Ignored;
+}
+
 /**
  * Called when the player is finished regenerating.
  * Clears ammo granted during regeneration on items with item_meter_resupply_denied set.
@@ -379,6 +453,53 @@ MRESReturn OnPlayerRegeneratePost(int client, Handle hParams) {
 	bool bRefillHealthAndAmmo = DHookGetParam(hParams, 1);
 	if (!bRefillHealthAndAmmo) {
 		return;
+	}
+	
+	// restore saved meters
+	while (g_SavedMeters[client].Length) {
+		MeterInfo info;
+		g_SavedMeters[client].GetArray(0, info);
+		g_SavedMeters[client].Erase(0);
+		
+#if defined _DEBUG
+		PrintToServer("restoring type: %d / value: %f", info.m_MeterType, info.m_flValue);
+#endif
+		if (!IsValidEntity(info.m_hWeapon)) {
+#if defined _DEBUG
+			PrintToServer("weapon not valid");
+#endif
+			continue;
+		}
+		
+		// not attached to client
+		int owner = GetEntPropEnt(info.m_hWeapon, Prop_Send, "m_hOwnerEntity");
+		if (owner != client && info.m_MeterType != Meter_PlayerChargeMeter) {
+#if defined _DEBUG
+			PrintToServer("item not attached");
+#endif
+			continue;
+		}
+		
+		// restore weapon
+		switch (info.m_MeterType) {
+			case Meter_PlayerChargeMeter: {
+				SetEntPropFloat(client, Prop_Send, "m_flChargeMeter", info.m_flValue * 100.0);
+			}
+			case Meter_WeaponEffectBar: {
+				float flRechargeTime = GetEffectBarRechargeTime(info.m_hWeapon);
+				float flSimulatedStartTime = GetGameTime() - (info.m_flValue * flRechargeTime);
+				
+				SetEntPropFloat(info.m_hWeapon, Prop_Send, "m_flEffectBarRegenTime", flSimulatedStartTime + flRechargeTime);
+				SetEntPropFloat(info.m_hWeapon, Prop_Send, "m_flLastFireTime", flSimulatedStartTime);
+				
+				if (info.m_flValue < 1.0) {
+					TF2_SetWeaponAmmo(info.m_hWeapon, 0);
+				}
+			}
+			case Meter_PlayerCloakMeter: {
+				SetEntPropFloat(client, Prop_Send, "m_flCloakMeter", info.m_flValue * 100.0);
+			}
+		}
 	}
 	
 	for (int i; i < 3; i++) {
@@ -765,6 +886,13 @@ void ProcessItemRecharge(int weapon) {
 		return;
 	} else if (GetEffectBarRechargeTime(weapon) <= 0.0) {
 		// this item doesn't use the legacy recharge method (Gas Passer uses a new interface)
+		// however, lunchbox items do use the new recharge system but always recover ammo
+		// regardless of resupply denial state
+		int owner = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
+		if (TF2Util_GetWeaponID(weapon) == TF_WEAPON_LUNCHBOX
+				&& GetEntPropFloat(owner, Prop_Send, "m_flItemChargeMeter", .element = 1) < 100.0) {
+			TF2_SetWeaponAmmo(weapon, 0);
+		}
 		return;
 	}
 	
@@ -844,6 +972,35 @@ void ApplyItemBurnModifier(int weapon, int victim) {
 	if (burnTime > currentBurnTime) {
 		TF2Util_SetPlayerBurnDuration(victim, burnTime);
 	}
+}
+
+/**
+ * Returns the type of the meter associated with a given item.
+ */
+MeterType GetItemMeterType(int item) {
+	if (!TF2Util_IsEntityWeapon(item)) {
+		char classname[64];
+		GetEntityClassname(item, classname, sizeof(classname));
+		
+		if (StrEqual(classname, "tf_wearable_demoshield")) {
+			return Meter_PlayerChargeMeter;
+		}
+		
+		return Meter_Invalid;
+	}
+	
+	switch (TF2Util_GetWeaponID(item)) {
+		case TF_WEAPON_LUNCHBOX, TF_WEAPON_JAR, TF_WEAPON_JAR_MILK, TF_WEAPON_JAR_GAS,
+				TF_WEAPON_BAT_WOOD, TF_WEAPON_BAT_GIFTWRAP, TF_WEAPON_CLEAVER: {
+			if (GetEffectBarRechargeTime(item) > 0.0) {
+				return Meter_WeaponEffectBar;
+			}
+		}
+		case TF_WEAPON_INVIS: {
+			return Meter_PlayerCloakMeter;
+		}
+	}
+	return Meter_Invalid;
 }
 
 /**
