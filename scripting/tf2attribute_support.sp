@@ -151,6 +151,12 @@ public void OnPluginStart() {
 	}
 	DHookEnableDetour(dtWeaponBaseVMFlipped, true, OnWeaponBaseVMFlippedPost);
 	
+	Handle dtWeaponBaseGunZoomIn = DHookCreateFromConf(hGameConf, "CTFWeaponBaseGun::ZoomIn()");
+	if (!dtWeaponBaseGunZoomIn) {
+		SetFailState("Failed to create detour " ... "CTFWeaponBaseGun::ZoomIn()");
+	}
+	DHookEnableDetour(dtWeaponBaseGunZoomIn, true, OnWeaponBaseGunZoomInPost);
+	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
 			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
@@ -679,6 +685,22 @@ MRESReturn OnWeaponBaseVMFlippedPost(int weapon, Handle hReturn) {
 	if (invert) {
 		DHookSetReturn(hReturn, !flipped);
 		return MRES_Override;
+	}
+	return MRES_Ignored;
+}
+
+MRESReturn OnWeaponBaseGunZoomInPost(int weapon) {
+	int owner = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
+	if (!IsValidEntity(owner)) {
+		return MRES_Ignored;
+	}
+	int fov = RoundFloat(TF2Attrib_HookValueFloat(20.0, "mult_zoom_fov", weapon));
+	
+	if (fov <= 75) {
+		SetEntProp(owner, Prop_Send, "m_iFOV", fov);
+	} else {
+		LogMessage("WARNING: Cannot set mult_zoom_fov to a value higher than 3.5; ignoring "
+				... "current value %.2f.", fov / 20.0);
 	}
 	return MRES_Ignored;
 }

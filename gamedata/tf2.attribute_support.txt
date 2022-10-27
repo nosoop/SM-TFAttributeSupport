@@ -138,6 +138,13 @@
 				"return"		"float"
 				"this"			"entity"
 			}
+			"CTFWeaponBaseGun::ZoomIn()"
+			{
+				"signature"		"CTFWeaponBaseGun::ZoomIn()"
+				"callconv"		"thiscall"
+				"return"		"void"
+				"this"			"entity"
+			}
 			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)"
 			{
 				"offset"		"CTFWeaponBaseGrenadeProj::InitGrenade(int float)"
@@ -277,6 +284,12 @@
 				"library"	"server"
 				"linux"		"@_ZN13CTFWeaponBase18IsViewModelFlippedEv"
 				"windows"	"\x56\x57\x6A\x00\x68\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\x6A\x00\x8B\xF9\xE8\x2A\x2A\x2A\x2A\x50\xE8\x2A\x2A\x2A\x2A\x8B\xF0\x83\xC4\x14\x85\xF6\x74\x2A\x8B\x16"
+			}
+			"CTFWeaponBaseGun::ZoomIn()"
+			{
+				"library"	"server"
+				"linux"		"@_ZN16CTFWeaponBaseGun6ZoomInEv"
+				"windows"	"\x56\x57\x8B\xF9\xE8\x2A\x2A\x2A\x2A\x8B\xF0\x85\xF6\x74\x2A\x8B\x16\x8B\xCE\xFF\xB7\x2A\x2A\x00\x00"
 			}
 		}
 	}
