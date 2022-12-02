@@ -196,55 +196,65 @@
 		}
 		"Offsets"
 		{
+			"CBaseCombatWeapon::IsBaseCombatWeapon()"
+			{
+				"windows"	"91"
+				"linux"		"92"
+			}
 			"CBaseCombatWeapon::SendWeaponAnim()"
 			{
-				"windows"	"246"
-				"linux"		"252"
+				"windows"	"249"
+				"linux"		"255"
 			}
 			"CBaseEntity::GetDamage()"
 			{
-				"windows"		"131"
-				"linux"			"132"
+				"windows"		"134"
+				"linux"			"135"
 			}
 			"CBaseGrenade::GetDamageRadius()"
 			{
-				"windows"	"238"
-				"linux"		"239"
+				"windows"	"241"
+				"linux"		"242"
+			}
+			"CBasePlayer::Weapon_ShootPosition()"
+			{
+				"windows"	"275"
+				"linux"		"276"
 			}
 			"CTFBaseRocket::Explode()"
 			{
-				"windows"	"236"
-				"linux"		"237"
+				"windows"	"239"
+				"linux"		"240"
 			}
 			"CTFWeaponBase::GetInitialAfterburnDuration()"
 			{
-				"windows"	"452"
-				"linux"		"459"
+				"windows"	"455"
+				"linux"		"462"
 			}
 			"CTFWeaponBase::GetAfterburnRateOnHit()"
 			{
-				"windows"	"453"
-				"linux"		"460"
+				"windows"	"456"
+				"linux"		"463"
 			}
 			"CTFWeaponBase::InternalGetEffectBarRechargeTime()"
 			{
-				"windows"	"459"
-				"linux"		"466"
+				"windows"	"462"
+				"linux"		"469"
 			}
 			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)"
 			{
-				"windows"	"240"
-				"linux"		"242"
+				"windows"	"243"
+				"linux"		"245"
 			}
 			"CTFWeaponBaseGun::FireJar()"
 			{
-				"windows"	"472"
-				"linux"		"479"
+				"windows"	"475"
+				"linux"		"482"
 			}
 			"CTFWeaponBaseGun::GetProjectileSpeed()"
 			{
-				"windows"	"477"
-				"linux"		"484"
+				"windows"	"480"
+				"linux"		"487"
 			}
 		}
 		"Signatures"
@@ -268,7 +278,7 @@
 				// we use this to avoid stomping on the signature for CTFPlayer::AddCustomAttribute
 				"library"	"server"
 				"linux"		"@_ZN15CTFPlayerShared22ApplyAttributeToPlayerEPKcf"
-				"windows"	"\x55\x8B\xEC\x56\xFF\x75\x08\x8B\xF1\xE8\x2A\x2A\x2A\x2A\x8B\xC8\xE8\x2A\x2A\x2A\x2A\x8B\x8E\x2A\x2A\x00\x00\xD9\x45\x0C"
+				"windows"	"\x55\x8B\xEC\x56\xFF\x75\x08\x8B\xF1\xE8\x2A\x2A\x2A\x2A\x8B\xC8\xE8\x2A\x2A\x2A\x2A\x85\xC0\x74\x2A\x8B\x8E\x2A\x01\x00\x00\xD9\x45\x0C"
 			}
 			"CTFPlayerShared::RemoveAttributeFromPlayer()"
 			{
@@ -276,7 +286,7 @@
 				// really should've been backported to 1.10 fgsfds
 				"library"	"server"
 				"linux"		"@_ZN15CTFPlayerShared25RemoveAttributeFromPlayerEPKc"
-				"windows"	"\x55\x8B\xEC\x56\xFF\x75\x08\x8B\xF1\xE8\x2A\x2A\x2A\x2A\x8B\xC8\xE8\x2A\x2A\x2A\x2A\x8B\x8E\x2A\x2A\x00\x00\x81\xC1\x2A\x2A\x00\x00"
+				"windows"	"\x55\x8B\xEC\x56\xFF\x75\x08\x8B\xF1\xE8\x2A\x2A\x2A\x2A\x8B\xC8\xE8\x2A\x2A\x2A\x2A\x85\xC0\x74\x2A\x8B\x8E\x8C\x2A\x00\x00\x81\xC1\x84\x12\x00\x00"
 			}
 			"CTFWeaponBase::IsViewModelFlipped()"
 			{
