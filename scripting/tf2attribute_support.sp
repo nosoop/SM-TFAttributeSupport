@@ -22,7 +22,7 @@
 #include <tf2attributes>
 #include <tf2utils>
 
-#define PLUGIN_VERSION "1.11.0"
+#define PLUGIN_VERSION "1.12.0"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -48,6 +48,8 @@ Handle g_SDKCallInternalGetEffectBarRechargeTime;
 Handle g_SDKCallGetWeaponAfterburnRate;
 
 int voffs_SendWeaponAnim;
+
+int offs_CGameTrace_pEnt;
 
 #define TF_ITEMDEF_FORCE_A_NATURE                45
 #define TF_ITEMDEF_FORCE_A_NATURE_FESTIVE        1078
@@ -176,6 +178,14 @@ public void OnPluginStart() {
 	}
 	DHookEnableDetour(dtWeaponBaseGunZoomIn, true, OnWeaponBaseGunZoomInPost);
 	
+	Handle dtWeaponBaseMeleeSwingHit = DHookCreateFromConf(hGameConf,
+			"CTFWeaponBaseMelee::OnSwingHit()");
+	if (!dtWeaponBaseMeleeSwingHit) {
+		SetFailState("Failed to create detour " ... "CTFWeaponBaseMelee::OnSwingHit()");
+	}
+	DHookEnableDetour(dtWeaponBaseMeleeSwingHit, false, OnWeaponBaseMeleeSwingHitPre);
+	
+	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
 			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
@@ -219,6 +229,11 @@ public void OnPluginStart() {
 	
 	StoreToAddress(ppValue, view_as<any>(GetAddressOfCell(g_flAirDashDeployTime)),
 			NumberType_Int32);
+	
+	offs_CGameTrace_pEnt = GameConfGetOffset(hGameConf, "CGameTrace::m_pEnt");
+	if (offs_CGameTrace_pEnt <= 0) {
+		SetFailState("Failed to determine offset of " ... "CGameTrace::m_pEnt");
+	}
 	
 	delete hGameConf;
 	
@@ -822,6 +837,20 @@ MRESReturn OnWeaponBaseGunZoomInPost(int weapon) {
 	} else {
 		LogMessage("WARNING: Cannot set mult_zoom_fov to a value higher than 3.5; ignoring "
 				... "current value %.2f.", fov / 20.0);
+	}
+	return MRES_Ignored;
+}
+
+/**
+ * Validates that we have a non-null entity in the trace.  This is a hotfix for
+ * the non-schema `melee_cleave_attack` attribute class, as whatever it's doing may cause this.
+ */
+MRESReturn OnWeaponBaseMeleeSwingHitPre(int weapon, Handle hReturn, Handle hParams) {
+	int pTraceEnt = DHookGetParamObjectPtrVar(hParams, 1, offs_CGameTrace_pEnt,
+			ObjectValueType_Int);
+	if (!pTraceEnt) {
+		DHookSetReturn(hReturn, false);
+		return MRES_Supercede;
 	}
 	return MRES_Ignored;
 }
