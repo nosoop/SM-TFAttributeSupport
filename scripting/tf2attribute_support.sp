@@ -307,9 +307,9 @@ public void OnEntityCreated(int entity, const char[] className) {
 	
 	if (TF2Util_IsEntityWeapon(entity)) {
 		HookWeaponBase(entity);
-	}
-	if (IsWeaponBaseGun(entity)) {
-		HookWeaponBaseGun(entity, className);
+		if (IsWeaponBaseGun(entity)) {
+			HookWeaponBaseGun(entity, className);
+		}
 	}
 	
 	if (strncmp(className, "tf_projectile_pipe", strlen("tf_projectile_pipe")) == 0) {
