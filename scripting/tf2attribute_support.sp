@@ -829,6 +829,8 @@ MRESReturn OnWeaponBaseGunZoomInPost(int weapon) {
 	if (fov <= 75) {
 		SetEntProp(owner, Prop_Send, "m_iFOV", fov);
 	} else {
+		// the game forces FOV values higher than 75 to always zoom in
+		// we'll just raise a warning in that case
 		LogMessage("WARNING: Cannot set mult_zoom_fov to a value higher than 3.5; ignoring "
 				... "current value %.2f.", fov / 20.0);
 	}
