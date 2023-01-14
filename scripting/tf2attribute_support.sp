@@ -367,7 +367,8 @@ void OnClientTakeDamageAlivePost(int victim, int attacker, int inflictor, float 
 }
 
 /**
- * Called when the player has left the ground.  Attaches a jump particle to their feet.
+ * Called when the player has left the ground.  Attaches a jump particle to their feet if
+ * requested via the 'bot_custom_jump_particle' attribute class.
  */
 void OnClientGroundEntChangedPost(int client) {
 	if (!IsPlayerAlive(client) || GetClientButtons(client) & IN_JUMP == 0) {
@@ -523,6 +524,11 @@ static MRESReturn HookWeaponBase(int entity) {
 	// currently stubbed
 }
 
+/**
+ * Valve hardcodes the amount of time before the player can use the Atomizer's triple-jump to
+ * 0.7 seconds after switching to the weapon.  This change modifies the value so it scales with
+ * the weapon's deploy time.
+ */
 MRESReturn OnPlayerCanAirDashPre(int client) {
 	g_flAirDashDeployTime = DEFAULT_REQUIRED_DEPLOY_FOR_AIR_DASH;
 	
@@ -683,6 +689,9 @@ MRESReturn OnGetProjectileSpeedPost(int weapon, Handle hReturn) {
 	return MRES_Ignored;
 }
 
+/**
+ * Allows for large explosions on rockets.
+ */
 MRESReturn OnRocketExplodePost(int rocket, Handle hParams) {
 	int owner = TF2_GetEntityOwner(rocket);
 	if (0 < owner < MaxClients
@@ -819,6 +828,10 @@ MRESReturn OnWeaponBaseVMFlippedPost(int weapon, Handle hReturn) {
 	return MRES_Ignored;
 }
 
+/**
+ * Implements the game's stubbed mult_zoom_fov attribute class.  This is specified in the schema
+ * but not implemented in code.
+ */
 MRESReturn OnWeaponBaseGunZoomInPost(int weapon) {
 	int owner = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
 	if (!IsValidEntity(owner)) {
