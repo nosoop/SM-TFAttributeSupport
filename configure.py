@@ -17,7 +17,7 @@ include_dirs = [
 	'third_party/vendored',
 ]
 
-spcomp_min_version = (1, 9)
+spcomp_min_version = (1, 11)
 
 ########################
 # build.ninja script generation below.

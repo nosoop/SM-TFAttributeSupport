@@ -370,20 +370,6 @@ void OnClientTakeDamageAlivePost(int victim, int attacker, int inflictor, float 
  * Called when the player has left the ground.  Attaches a jump particle to their feet.
  */
 void OnClientGroundEntChangedPost(int client) {
-	// hardcoded class attach point tables -- in the future we should use LookupEntityAttachment
-	static int g_classFeet[10][2] = {
-		{ 0, 0 },
-		{ 4, 5 },
-		{ 5, 6 },
-		{ 5, 6 },
-		{ 4, 5 },
-		{ 5, 6 },
-		{ 5, 6 },
-		{ 22, 23 },
-		{ 6, 7 },
-		{ 2, 3 },
-	};
-	
 	if (!IsPlayerAlive(client) || GetClientButtons(client) & IN_JUMP == 0) {
 		return;
 	}
@@ -396,13 +382,21 @@ void OnClientGroundEntChangedPost(int client) {
 		return;
 	}
 	
+	int attachLeft = LookupEntityAttachment(client, "foot_L");
+	int attachRight = LookupEntityAttachment(client, "foot_R");
+	
+	if (!attachLeft || !attachRight) {
+		// feet attachment points are not on the model
+		return;
+	}
+	
 	int pc = view_as<int>(TF2_GetPlayerClass(client));
 	TE_SetupTFParticleEffect("rocketjump_smoke", NULL_VECTOR, .entity = client,
-			.attachType = PATTACH_POINT_FOLLOW, .attachPoint = g_classFeet[pc][0]);
+			.attachType = PATTACH_POINT_FOLLOW, .attachPoint = attachLeft);
 	TE_SendToAll();
 	
 	TE_SetupTFParticleEffect("rocketjump_smoke", NULL_VECTOR, .entity = client,
-			.attachType = PATTACH_POINT_FOLLOW, .attachPoint = g_classFeet[pc][1]);
+			.attachType = PATTACH_POINT_FOLLOW, .attachPoint = attachRight);
 	TE_SendToAll();
 }
 
