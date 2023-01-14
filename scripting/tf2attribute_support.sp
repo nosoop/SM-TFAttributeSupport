@@ -556,7 +556,7 @@ static void HookWeaponBaseGun(int entity, const char[] className) {
  * Adds "mult_projectile_speed" support on the Pomson and Righteous Bison's energy projectiles.
  * Note that the velocity starts to break down around 3600HU/s (3x speed)
  */
-public void EnergyRingPostSpawnPost(int entref) {
+void EnergyRingPostSpawnPost(int entref) {
 	if (!IsValidEntity(entref)) {
 		return;
 	}
@@ -599,7 +599,7 @@ MRESReturn OnScattergunSendAnimPre(int entity, Handle hReturn, Handle hParams) {
 /**
  * Adds "mult_dmg" support on the Pomson and Righteous Bison's energy projectiles.
  */
-public MRESReturn OnGetEnergyRingDamagePost(int entity, Handle hReturn) {
+MRESReturn OnGetEnergyRingDamagePost(int entity, Handle hReturn) {
 	int weapon = GetEntPropEnt(entity, Prop_Send, "m_hOriginalLauncher");
 	if (!IsValidEntity(weapon)) {
 		return MRES_Ignored;
@@ -615,7 +615,7 @@ public MRESReturn OnGetEnergyRingDamagePost(int entity, Handle hReturn) {
  * Allows the use of "mult_explosion_radius" to increase the effect radius on Jarate-based
  * entities (Jarate, Mad Milk, Gas Passer).
  */
-public MRESReturn OnGetGrenadeDamageRadiusPost(int grenade, Handle hReturn) {
+MRESReturn OnGetGrenadeDamageRadiusPost(int grenade, Handle hReturn) {
 	float radius = DHookGetReturn(hReturn);
 	
 	int weapon = GetEntPropEnt(grenade, Prop_Send, "m_hOriginalLauncher");
@@ -641,7 +641,7 @@ MRESReturn OnGrenadeInit(int grenade, Handle hParams) {
 /**
  * Patches unsupported weapons' projectile speed getters based on "override projectile type"
  */
-public MRESReturn OnGetProjectileSpeedPost(int weapon, Handle hReturn) {
+MRESReturn OnGetProjectileSpeedPost(int weapon, Handle hReturn) {
 	float speed = DHookGetReturn(hReturn);
 	
 	// TODO how should we deal with items that already have a speed?
@@ -700,7 +700,7 @@ MRESReturn OnRocketExplodePost(int rocket, Handle hParams) {
 	return MRES_Ignored;
 }
 
-public MRESReturn OnFireJarPre(int weapon, Handle hReturn, Handle hParams) {
+MRESReturn OnFireJarPre(int weapon, Handle hReturn, Handle hParams) {
 	int owner = !DHookIsNullParam(hParams, 1) ?
 			DHookGetParam(hParams, 1) : INVALID_ENT_REFERENCE;
 	if (owner < 1 || owner > MaxClients) {
