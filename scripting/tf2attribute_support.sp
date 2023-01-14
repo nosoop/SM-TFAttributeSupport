@@ -868,8 +868,6 @@ MRESReturn OnPlayerAttributesChangedPost(Address pShared, Handle hParams) {
 			TF2Attrib_ClearCache(wearable);
 		}
 	}
-	
-	TF2Util_UpdatePlayerSpeed(client);
 }
 
 /**
