@@ -185,6 +185,12 @@ public void OnPluginStart() {
 	}
 	DHookEnableDetour(dtWeaponBaseMeleeSwingHit, false, OnWeaponBaseMeleeSwingHitPre);
 	
+	Handle dtGrenadeInit = DHookCreateFromConf(hGameConf, "CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
+	if (!dtGrenadeInit) {
+		SetFailState("Failed to create detour " ... "CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
+	}
+	DHookEnableDetour(dtGrenadeInit, true, OnGrenadeInit);
+	
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
@@ -310,11 +316,6 @@ public void OnEntityCreated(int entity, const char[] className) {
 		if (IsWeaponBaseGun(entity)) {
 			HookWeaponBaseGun(entity, className);
 		}
-	}
-	
-	if (strncmp(className, "tf_projectile_pipe", strlen("tf_projectile_pipe")) == 0) {
-		// unused. crashes inconsistently, because of course, virtual dhooks
-		// DHookEntity(g_DHookGrenadeInit, false, entity, .callback = OnGrenadeInit);
 	}
 }
 

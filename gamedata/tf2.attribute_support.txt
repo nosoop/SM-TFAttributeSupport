@@ -147,8 +147,8 @@
 			}
 			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)"
 			{
-				"offset"		"CTFWeaponBaseGrenadeProj::InitGrenade(int float)"
-				"hooktype"		"entity"
+				"signature"		"CTFWeaponBaseGrenadeProj::InitGrenade(int float)"
+				"callconv"		"thiscall"
 				"return"		"void"
 				"this"			"entity"
 				"arguments"
@@ -314,6 +314,13 @@
 				"library"	"server"
 				"linux"		"@_ZN13CTFWeaponBase18IsViewModelFlippedEv"
 				"windows"	"\x56\x57\x6A\x00\x68\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\x6A\x00\x8B\xF9\xE8\x2A\x2A\x2A\x2A\x50\xE8\x2A\x2A\x2A\x2A\x8B\xF0\x83\xC4\x14\x85\xF6\x74\x2A\x8B\x16"
+			}
+			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)"
+			{
+				// unique instance where 3EE66666h gets moved to 'ebp' on Windows
+				"library"	"server"
+				"linux"		"@_ZN24CTFWeaponBaseGrenadeProj11InitGrenadeERK6VectorS2_P20CBaseCombatCharacterif"
+				"windows"	"\x55\x8B\xEC\x53\x56\x8B\xF1\x57\x6A\x00\x8B\x06"
 			}
 			"CTFWeaponBaseGun::ZoomIn()"
 			{
