@@ -196,15 +196,13 @@ public void OnPluginStart() {
 		SetFailState("Failed to create detour " ... "CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
 	}
 	DHookEnableDetour(dtGrenadeInit, true, OnGrenadeInit);
-
+	
 	Handle dtCreateRagdoll = DHookCreateFromConf(hGameConf, "CTFPlayer::CreateRagdollEntity()");
-
 	if (!dtCreateRagdoll) {
 		SetFailState("Failed to create detour " ... "CTFPlayer::CreateRagdollEntity()");
 	}
-
 	DHookEnableDetour(dtCreateRagdoll, false, OnCreateRagdollPre);
-
+	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
 			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
@@ -255,9 +253,10 @@ public void OnPluginStart() {
 	}
 	
 	delete hGameConf;
-
+	
+	// TODO fix this
 	CTakeDamageInfo_m_hWeapon = view_as<Address>(44);
-
+	
 	for (int i = 1; i <= MaxClients; i++) {
 		g_SavedMeters[i] = new ArrayList(sizeof(MeterInfo));
 		if (IsClientInGame(i)) {
@@ -1060,33 +1059,29 @@ MeterType GetItemMeterType(int item) {
 	return Meter_Invalid;
 }
 
-MRESReturn DHookEvent_KilledPre(int client, DHookParam hParams)
-{
+MRESReturn DHookEvent_KilledPre(int client, DHookParam hParams) {
 	Address info = hParams.GetAddress(1);
 	if (info == Address_Null)
 		return MRES_Ignored;
-
+	
 	int weapon = LoadEntityHandleFromAddress(info + CTakeDamageInfo_m_hWeapon);
 	if (IsValidEntity(weapon))
-    {
+	{
 		if (TF2Attrib_HookValueInt(0, "set_turn_to_ice", weapon))
 		{
 			g_bShouldTurnToIce[client] = true;
 		}
-    }
-
+	}
 	return MRES_Ignored;
 }
 
-MRESReturn OnCreateRagdollPre(int client, DHookParam hParams)
-{
+MRESReturn OnCreateRagdollPre(int client, DHookParam hParams) {
 	if (g_bShouldTurnToIce[client])
 	{
 		g_bShouldTurnToIce[client] = false;
 		DHookSetParam(hParams, 7, true);
 		return MRES_ChangedHandled;
 	}
-
 	return MRES_Ignored;
 }
 
