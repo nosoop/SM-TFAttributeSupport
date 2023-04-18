@@ -38,6 +38,7 @@ Handle g_DHookGrenadeGetDamageRadius;
 Handle g_DHookWeaponGetProjectileSpeed;
 Handle g_DHookFireJar;
 Handle g_DHookRocketExplode;
+Handle g_DHookPlayerEventKilled;
 
 Handle g_DHookPlayerRegenerate;
 
@@ -50,6 +51,7 @@ Handle g_SDKCallGetWeaponAfterburnRate;
 int voffs_SendWeaponAnim;
 
 int offs_CGameTrace_pEnt;
+int offs_CTakeDamageInfo_hWeapon;
 
 #define TF_ITEMDEF_FORCE_A_NATURE                45
 #define TF_ITEMDEF_FORCE_A_NATURE_FESTIVE        1078
@@ -113,6 +115,8 @@ enum struct MeterInfo {
 
 ArrayList g_SavedMeters[MAXPLAYERS + 1];
 
+bool g_bShouldTurnToIce[MAXPLAYERS + 1] = { false, ... };
+
 public void OnPluginStart() {
 	Handle hGameConf = LoadGameConfigFile("tf2.attribute_support");
 	if (!hGameConf) {
@@ -137,6 +141,8 @@ public void OnPluginStart() {
 	
 	g_DHookGrenadeInit = DHookCreateFromConf(hGameConf,
 			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
+	
+	g_DHookPlayerEventKilled = DHookCreateFromConf(hGameConf, "CBasePlayer::Event_Killed()");
 	
 	g_DHookPlayerRegenerate = DHookCreateFromConf(hGameConf, "CTFPlayer::Regenerate()");
 	DHookEnableDetour(g_DHookPlayerRegenerate, false, OnPlayerRegeneratePre);
@@ -191,6 +197,19 @@ public void OnPluginStart() {
 	}
 	DHookEnableDetour(dtGrenadeInit, true, OnGrenadeInit);
 	
+	// unique name because dhooks uses the name globally and other plugins may also use the name
+	Handle dtPlayerKilled = DHookCreateFromConf(hGameConf, "CTFPlayer::Event_Killed().EfE70Msax8M");
+	if (!dtPlayerKilled) {
+		SetFailState("Failed to create detour " ... "CTFPlayer::Event_Killed()");
+	}
+	DHookEnableDetour(dtPlayerKilled, false, OnPlayerKilledPre);
+	
+	
+	Handle dtCreateRagdoll = DHookCreateFromConf(hGameConf, "CTFPlayer::CreateRagdollEntity()");
+	if (!dtCreateRagdoll) {
+		SetFailState("Failed to create detour " ... "CTFPlayer::CreateRagdollEntity()");
+	}
+	DHookEnableDetour(dtCreateRagdoll, false, OnCreateRagdollPre);
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
@@ -239,6 +258,11 @@ public void OnPluginStart() {
 	offs_CGameTrace_pEnt = GameConfGetOffset(hGameConf, "CGameTrace::m_pEnt");
 	if (offs_CGameTrace_pEnt <= 0) {
 		SetFailState("Failed to determine offset of " ... "CGameTrace::m_pEnt");
+	}
+	
+	offs_CTakeDamageInfo_hWeapon = GameConfGetOffset(hGameConf, "CTakeDamageInfo::m_hWeapon");
+	if (offs_CTakeDamageInfo_hWeapon <= 0) {
+		SetFailState("Failed to determine offset of " ... "CTakeDamageInfo::m_hWeapon");
 	}
 	
 	delete hGameConf;
@@ -320,6 +344,7 @@ public void OnEntityCreated(int entity, const char[] className) {
 }
 
 public void OnClientPutInServer(int client) {
+	g_bShouldTurnToIce[client] = false;
 	SDKHook(client, SDKHook_SpawnPost, OnClientSpawnPost);
 	SDKHook(client, SDKHook_OnTakeDamageAlivePost, OnClientTakeDamageAlivePost);
 	SDKHook(client, SDKHook_GroundEntChangedPost, OnClientGroundEntChangedPost);
@@ -391,8 +416,7 @@ void OnClientGroundEntChangedPost(int client) {
 		// feet attachment points are not on the model
 		return;
 	}
-	
-	int pc = view_as<int>(TF2_GetPlayerClass(client));
+
 	TE_SetupTFParticleEffect("rocketjump_smoke", NULL_VECTOR, .entity = client,
 			.attachType = PATTACH_POINT_FOLLOW, .attachPoint = attachLeft);
 	TE_SendToAll();
@@ -463,7 +487,7 @@ MRESReturn OnPlayerRegeneratePre(int client, Handle hParams) {
 MRESReturn OnPlayerRegeneratePost(int client, Handle hParams) {
 	bool bRefillHealthAndAmmo = DHookGetParam(hParams, 1);
 	if (!bRefillHealthAndAmmo) {
-		return;
+		return MRES_Ignored;
 	}
 	
 	// restore saved meters
@@ -519,6 +543,8 @@ MRESReturn OnPlayerRegeneratePost(int client, Handle hParams) {
 			ProcessItemRecharge(weapon);
 		}
 	}
+
+	return MRES_Ignored;
 }
 
 static MRESReturn HookWeaponBase(int entity) {
@@ -884,6 +910,8 @@ MRESReturn OnPlayerAttributesChangedPost(Address pShared, Handle hParams) {
 			TF2Attrib_ClearCache(wearable);
 		}
 	}
+
+	return MRES_Ignored;
 }
 
 /**
@@ -1038,6 +1066,30 @@ MeterType GetItemMeterType(int item) {
 		}
 	}
 	return Meter_Invalid;
+}
+
+MRESReturn OnPlayerKilledPre(int client, Handle hParams) {
+	g_bShouldTurnToIce[client] = false;
+	if (DHookIsNullParam(hParams, 1)) {
+		return MRES_Ignored;
+	}
+	
+	int weapon = DHookGetParamObjectPtrVar(hParams, 1, offs_CTakeDamageInfo_hWeapon,
+			ObjectValueType_Ehandle);
+	
+	g_bShouldTurnToIce[client] = IsValidEntity(weapon)
+			&& TF2Attrib_HookValueInt(0, "set_turn_to_ice", weapon);
+	
+	return MRES_Ignored;
+}
+
+MRESReturn OnCreateRagdollPre(int client, Handle hParams) {
+	if (g_bShouldTurnToIce[client]) {
+		g_bShouldTurnToIce[client] = false;
+		DHookSetParam(hParams, 7, true);
+		return MRES_ChangedHandled;
+	}
+	return MRES_Ignored;
 }
 
 /**
