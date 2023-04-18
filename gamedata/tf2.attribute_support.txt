@@ -345,6 +345,11 @@
 				"windows"	"76"
 				"linux"		"76"
 			}
+			"CTakeDamageInfo::m_hWeapon"
+			{
+				"windows"	"44"
+				"linux"		"44"
+			}
 		}
 		"Signatures"
 		{

@@ -51,6 +51,7 @@ Handle g_SDKCallGetWeaponAfterburnRate;
 int voffs_SendWeaponAnim;
 
 int offs_CGameTrace_pEnt;
+int offs_CTakeDamageInfo_hWeapon;
 
 #define TF_ITEMDEF_FORCE_A_NATURE                45
 #define TF_ITEMDEF_FORCE_A_NATURE_FESTIVE        1078
@@ -114,7 +115,6 @@ enum struct MeterInfo {
 
 ArrayList g_SavedMeters[MAXPLAYERS + 1];
 
-Address CTakeDamageInfo_m_hWeapon;
 bool g_bShouldTurnToIce[MAXPLAYERS + 1] = { false, ... };
 
 public void OnPluginStart() {
@@ -252,10 +252,12 @@ public void OnPluginStart() {
 		SetFailState("Failed to determine offset of " ... "CGameTrace::m_pEnt");
 	}
 	
-	delete hGameConf;
+	offs_CTakeDamageInfo_hWeapon = GameConfGetOffset(hGameConf, "CTakeDamageInfo::m_hWeapon");
+	if (offs_CTakeDamageInfo_hWeapon <= 0) {
+		SetFailState("Failed to determine offset of " ... "CTakeDamageInfo::m_hWeapon");
+	}
 	
-	// TODO fix this
-	CTakeDamageInfo_m_hWeapon = view_as<Address>(44);
+	delete hGameConf;
 	
 	for (int i = 1; i <= MaxClients; i++) {
 		g_SavedMeters[i] = new ArrayList(sizeof(MeterInfo));
@@ -1059,25 +1061,23 @@ MeterType GetItemMeterType(int item) {
 	return Meter_Invalid;
 }
 
-MRESReturn DHookEvent_KilledPre(int client, DHookParam hParams) {
-	Address info = hParams.GetAddress(1);
-	if (info == Address_Null)
+MRESReturn DHookEvent_KilledPre(int client, Handle hParams) {
+	if (DHookIsNullParam(hParams, 1)) {
 		return MRES_Ignored;
+	}
 	
-	int weapon = LoadEntityHandleFromAddress(info + CTakeDamageInfo_m_hWeapon);
-	if (IsValidEntity(weapon))
-	{
-		if (TF2Attrib_HookValueInt(0, "set_turn_to_ice", weapon))
-		{
+	int weapon = DHookGetParamObjectPtrVar(hParams, 1, offs_CTakeDamageInfo_hWeapon,
+			ObjectValueType_Ehandle);
+	if (IsValidEntity(weapon)) {
+		if (TF2Attrib_HookValueInt(0, "set_turn_to_ice", weapon)) {
 			g_bShouldTurnToIce[client] = true;
 		}
 	}
 	return MRES_Ignored;
 }
 
-MRESReturn OnCreateRagdollPre(int client, DHookParam hParams) {
-	if (g_bShouldTurnToIce[client])
-	{
+MRESReturn OnCreateRagdollPre(int client, Handle hParams) {
+	if (g_bShouldTurnToIce[client]) {
 		g_bShouldTurnToIce[client] = false;
 		DHookSetParam(hParams, 7, true);
 		return MRES_ChangedHandled;
