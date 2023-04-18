@@ -1,6 +1,6 @@
 /**
  * TF2 Attribute Extended Support plugin
- *
+ * 
  * Certain combinations of attributes and weapons just don't work.  This plugin intends to fix
  * the known problematic combinations so modders can apply game attributes for their own uses.
  */
@@ -99,14 +99,14 @@ enum MeterType {
 	Meter_Invalid,
 	Meter_PlayerCloakMeter,
 	Meter_PlayerChargeMeter,
-
+	
 	Meter_WeaponEffectBar,
 }
 
 enum struct MeterInfo {
 	MeterType m_MeterType;
 	int m_hWeapon;
-
+	
 	// normalized to 0.0 -> 1.0
 	float m_flValue;
 }
@@ -121,21 +121,21 @@ public void OnPluginStart() {
 	if (!hGameConf) {
 		SetFailState("Failed to load gamedata (tf2.attribute_support).");
 	}
-
+	
 	g_DHookBaseEntityGetDamage = DHookCreateFromConf(hGameConf, "CBaseEntity::GetDamage()");
-
+	
 	voffs_SendWeaponAnim = GameConfGetOffset(hGameConf, "CBaseCombatWeapon::SendWeaponAnim()");
 	g_DHookWeaponSendAnim = DHookCreateFromConf(hGameConf,
 			"CBaseCombatWeapon::SendWeaponAnim()");
-
+	
 	g_DHookGrenadeGetDamageRadius = DHookCreateFromConf(hGameConf,
 			"CBaseGrenade::GetDamageRadius()");
-
+	
 	g_DHookWeaponGetProjectileSpeed = DHookCreateFromConf(hGameConf,
 			"CTFWeaponBaseGun::GetProjectileSpeed()");
-
+	
 	g_DHookFireJar = DHookCreateFromConf(hGameConf, "CTFWeaponBaseGun::FireJar()");
-
+	
 	g_DHookRocketExplode = DHookCreateFromConf(hGameConf, "CTFBaseRocket::Explode()");
 
 	g_DHookPlayerEventKilled = DHookCreateFromConf(hGameConf, "CBasePlayer::Event_Killed()");
@@ -143,20 +143,20 @@ public void OnPluginStart() {
 	g_DHookPlayerRegenerate = DHookCreateFromConf(hGameConf, "CTFPlayer::Regenerate()");
 	DHookEnableDetour(g_DHookPlayerRegenerate, false, OnPlayerRegeneratePre);
 	DHookEnableDetour(g_DHookPlayerRegenerate, true, OnPlayerRegeneratePost);
-
+	
 	Handle dtPlayerCanAirDash = DHookCreateFromConf(hGameConf, "CTFPlayer::CanAirDash()");
 	if (!dtPlayerCanAirDash) {
 		SetFailState("Failed to create detour " ... "CTFPlayer::CanAirDash()");
 	}
 	DHookEnableDetour(dtPlayerCanAirDash, false, OnPlayerCanAirDashPre);
-
+	
 	Handle dtSharedPlayerRemoveAttribute = DHookCreateFromConf(hGameConf,
 			"CTFPlayerShared::RemoveAttributeFromPlayer()");
 	if (!dtSharedPlayerRemoveAttribute) {
 		SetFailState("Failed to create detour CTFPlayerShared::RemoveAttributeFromPlayer()");
 	}
 	DHookEnableDetour(dtSharedPlayerRemoveAttribute, true, OnPlayerAttributesChangedPost);
-
+	
 	Handle dtSharedPlayerApplyAttribute = DHookCreateFromConf(hGameConf,
 			"CTFPlayerShared::ApplyAttributeToPlayer()");
 	if (!dtSharedPlayerApplyAttribute) {
@@ -166,27 +166,27 @@ public void OnPluginStart() {
 	// knowledge of player equipment nor the speed refresh logic.  so we might as well put both
 	// of them here for consistency's sake
 	DHookEnableDetour(dtSharedPlayerApplyAttribute, true, OnPlayerAttributesChangedPost);
-
+	
 	Handle dtWeaponBaseVMFlipped = DHookCreateFromConf(hGameConf,
 			"CTFWeaponBase::IsViewModelFlipped()");
 	if (!dtWeaponBaseVMFlipped) {
 		SetFailState("Failed to create detour " ... "CTFWeaponBase::IsViewModelFlipped()");
 	}
 	DHookEnableDetour(dtWeaponBaseVMFlipped, true, OnWeaponBaseVMFlippedPost);
-
+	
 	Handle dtWeaponBaseGunZoomIn = DHookCreateFromConf(hGameConf, "CTFWeaponBaseGun::ZoomIn()");
 	if (!dtWeaponBaseGunZoomIn) {
 		SetFailState("Failed to create detour " ... "CTFWeaponBaseGun::ZoomIn()");
 	}
 	DHookEnableDetour(dtWeaponBaseGunZoomIn, true, OnWeaponBaseGunZoomInPost);
-
+	
 	Handle dtWeaponBaseMeleeSwingHit = DHookCreateFromConf(hGameConf,
 			"CTFWeaponBaseMelee::OnSwingHit()");
 	if (!dtWeaponBaseMeleeSwingHit) {
 		SetFailState("Failed to create detour " ... "CTFWeaponBaseMelee::OnSwingHit()");
 	}
 	DHookEnableDetour(dtWeaponBaseMeleeSwingHit, false, OnWeaponBaseMeleeSwingHitPre);
-
+	
 	Handle dtGrenadeInit = DHookCreateFromConf(hGameConf, "CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
 	if (!dtGrenadeInit) {
 		SetFailState("Failed to create detour " ... "CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
@@ -210,19 +210,19 @@ public void OnPluginStart() {
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
 	PrepSDKCall_AddParameter(SDKType_Float, SDKPass_Plain);
 	g_SDKCallInitGrenade = EndPrepSDKCall();
-
+	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
 			"CTFWeaponBase::InternalGetEffectBarRechargeTime()");
 	PrepSDKCall_SetReturnInfo(SDKType_Float, SDKPass_Plain);
 	g_SDKCallInternalGetEffectBarRechargeTime = EndPrepSDKCall();
-
+	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual,
 			"CTFWeaponBase::GetAfterburnRateOnHit()");
 	PrepSDKCall_SetReturnInfo(SDKType_Float, SDKPass_Plain);
 	g_SDKCallGetWeaponAfterburnRate = EndPrepSDKCall();
-
+	
 	MemoryPatch patchAirDashDeployTime = MemoryPatch.CreateFromConf(hGameConf,
 			"CTFPlayer::CanAirDash()::PatchRequiredDeployTime");
 	if (!patchAirDashDeployTime.Validate()) {
@@ -230,7 +230,7 @@ public void OnPluginStart() {
 				... "CTFPlayer::CanAirDash()::PatchRequiredDeployTime");
 	}
 	patchAirDashDeployTime.Enable();
-
+	
 	Address ppValue = patchAirDashDeployTime.Address + view_as<Address>(4);
 	Address pValue = DereferencePointer(ppValue);
 	float value = view_as<float>(LoadFromAddress(pValue, NumberType_Int32));
@@ -241,15 +241,15 @@ public void OnPluginStart() {
 				value, value);
 	}
 	g_flAirDashDeployTime = value;
-
+	
 	StoreToAddress(ppValue, view_as<any>(GetAddressOfCell(g_flAirDashDeployTime)),
 			NumberType_Int32);
-
+	
 	offs_CGameTrace_pEnt = GameConfGetOffset(hGameConf, "CGameTrace::m_pEnt");
 	if (offs_CGameTrace_pEnt <= 0) {
 		SetFailState("Failed to determine offset of " ... "CGameTrace::m_pEnt");
 	}
-
+	
 	delete hGameConf;
 
 	CTakeDamageInfo_m_hWeapon = view_as<Address>(44);
@@ -268,7 +268,7 @@ public void OnMapStart() {
 		if (!IsValidEdict(entity)) {
 			continue;
 		}
-
+		
 		if (TF2Util_IsEntityWeapon(entity)) {
 			HookWeaponBase(entity);
 		}
@@ -278,23 +278,23 @@ public void OnMapStart() {
 			HookWeaponBaseGun(entity, className);
 		}
 	}
-
+	
 	// get the address of CTFWeaponBase::SendWeaponAnim() directly
 	if (!g_SDKCallBaseWeaponSendAnim) {
 		int shotgun = CreateEntityByName("tf_weapon_shotgun_primary");
-
+		
 		Address vmt = DereferencePointer(GetEntityAddress(shotgun));
 		Address pfnBaseWeaponSendAnim = DereferencePointer(
 				vmt + view_as<Address>(4 * voffs_SendWeaponAnim));
-
+		
 		RemoveEntity(shotgun);
-
+		
 		StartPrepSDKCall(SDKCall_Entity);
 		PrepSDKCall_SetAddress(pfnBaseWeaponSendAnim);
 		PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
 		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
 		g_SDKCallBaseWeaponSendAnim = EndPrepSDKCall();
-
+		
 		if (!g_SDKCallBaseWeaponSendAnim) {
 			SetFailState("Failed to determine address of CBaseCombatWeapon::SendWeaponAnim()");
 		}
@@ -305,15 +305,15 @@ public void OnEntityCreated(int entity, const char[] className) {
 	if (!IsValidEdict(entity)) {
 		return;
 	}
-
+	
 	if (StrEqual(className, "tf_projectile_energy_ring")) {
 		RequestFrame(EnergyRingPostSpawnPost, EntIndexToEntRef(entity));
-
+		
 		// this is broken on SM1.10 ??
 		DHookEntity(g_DHookBaseEntityGetDamage, true, entity,
 				.callback = OnGetEnergyRingDamagePost);
 	}
-
+	
 	if (strncmp(className, "tf_projectile_jar", strlen("tf_projectile_jar")) == 0) {
 		DHookEntity(g_DHookGrenadeGetDamageRadius, true, entity,
 				.callback = OnGetGrenadeDamageRadiusPost);
@@ -321,7 +321,7 @@ public void OnEntityCreated(int entity, const char[] className) {
 	if (StrEqual(className, "tf_projectile_flare")) {
 		DHookEntity(g_DHookRocketExplode, true, entity, .callback = OnRocketExplodePost);
 	}
-
+	
 	if (TF2Util_IsEntityWeapon(entity)) {
 		HookWeaponBase(entity);
 		if (IsWeaponBaseGun(entity)) {
@@ -360,7 +360,7 @@ void OnClientTakeDamageAlivePost(int victim, int attacker, int inflictor, float 
 	if (attacker < 1 || attacker >= MaxClients) {
 		return;
 	}
-
+	
 	if (attacker != victim) {
 		// attacker gains charge on legacy meters on non-self damage
 		for (int i; i < 3; i++) {
@@ -371,7 +371,7 @@ void OnClientTakeDamageAlivePost(int victim, int attacker, int inflictor, float 
 			}
 		}
 	}
-
+	
 	// modify victim burning duration, even on self-hits
 	if (damagecustom != TF_CUSTOM_BURNING && IsValidEntity(weapon)
 			&& TF2Util_IsEntityWeapon(weapon)) {
@@ -388,18 +388,18 @@ void OnClientGroundEntChangedPost(int client) {
 	if (!IsPlayerAlive(client) || GetClientButtons(client) & IN_JUMP == 0) {
 		return;
 	}
-
+	
 	if (!IsValidEntity(GetEntPropEnt(client, Prop_Send, "m_hGroundEntity"))) {
 		return;
 	}
-
+	
 	if (!TF2Attrib_HookValueInt(0, "bot_custom_jump_particle", client)) {
 		return;
 	}
-
+	
 	int attachLeft = LookupEntityAttachment(client, "foot_L");
 	int attachRight = LookupEntityAttachment(client, "foot_R");
-
+	
 	if (!attachLeft || !attachRight) {
 		// feet attachment points are not on the model
 		return;
@@ -408,7 +408,7 @@ void OnClientGroundEntChangedPost(int client) {
 	TE_SetupTFParticleEffect("rocketjump_smoke", NULL_VECTOR, .entity = client,
 			.attachType = PATTACH_POINT_FOLLOW, .attachPoint = attachLeft);
 	TE_SendToAll();
-
+	
 	TE_SetupTFParticleEffect("rocketjump_smoke", NULL_VECTOR, .entity = client,
 			.attachType = PATTACH_POINT_FOLLOW, .attachPoint = attachRight);
 	TE_SendToAll();
@@ -416,27 +416,27 @@ void OnClientGroundEntChangedPost(int client) {
 
 MRESReturn OnPlayerRegeneratePre(int client, Handle hParams) {
 	g_SavedMeters[client].Clear();
-
+	
 	for (int i; i < 5; i++) {
 		int weapon = GetPlayerWeaponSlot(client, i);
-
+		
 		if (!IsValidEntity(weapon)) {
 			// dumb hack for shield
 			weapon = TF2Util_GetPlayerLoadoutEntity(client, i);
 		}
-
+		
 		if (!IsValidEntity(weapon)) {
 			continue;
 		}
-
+		
 		MeterInfo info;
 		info.m_hWeapon = EntIndexToEntRef(weapon);
-
+		
 		if (TF2Attrib_HookValueInt(0, "item_meter_resupply_denied", weapon) == 0) {
 			// only save the state of the item if value is non-zero
 			continue;
 		}
-
+		
 		info.m_MeterType = GetItemMeterType(weapon);
 		switch (info.m_MeterType) {
 			case Meter_Invalid: {
@@ -477,13 +477,13 @@ MRESReturn OnPlayerRegeneratePost(int client, Handle hParams) {
 	if (!bRefillHealthAndAmmo) {
 		return MRES_Ignored;
 	}
-
+	
 	// restore saved meters
 	while (g_SavedMeters[client].Length) {
 		MeterInfo info;
 		g_SavedMeters[client].GetArray(0, info);
 		g_SavedMeters[client].Erase(0);
-
+		
 #if defined _DEBUG
 		PrintToServer("restoring type: %d / value: %f", info.m_MeterType, info.m_flValue);
 #endif
@@ -493,7 +493,7 @@ MRESReturn OnPlayerRegeneratePost(int client, Handle hParams) {
 #endif
 			continue;
 		}
-
+		
 		// not attached to client
 		int owner = GetEntPropEnt(info.m_hWeapon, Prop_Send, "m_hOwnerEntity");
 		if (owner != client && info.m_MeterType != Meter_PlayerChargeMeter) {
@@ -502,7 +502,7 @@ MRESReturn OnPlayerRegeneratePost(int client, Handle hParams) {
 #endif
 			continue;
 		}
-
+		
 		// restore weapon
 		switch (info.m_MeterType) {
 			case Meter_PlayerChargeMeter: {
@@ -511,10 +511,10 @@ MRESReturn OnPlayerRegeneratePost(int client, Handle hParams) {
 			case Meter_WeaponEffectBar: {
 				float flRechargeTime = GetEffectBarRechargeTime(info.m_hWeapon);
 				float flSimulatedStartTime = GetGameTime() - (info.m_flValue * flRechargeTime);
-
+				
 				SetEntPropFloat(info.m_hWeapon, Prop_Send, "m_flEffectBarRegenTime", flSimulatedStartTime + flRechargeTime);
 				SetEntPropFloat(info.m_hWeapon, Prop_Send, "m_flLastFireTime", flSimulatedStartTime);
-
+				
 				if (info.m_flValue < 1.0) {
 					TF2_SetWeaponAmmo(info.m_hWeapon, 0);
 				}
@@ -524,7 +524,7 @@ MRESReturn OnPlayerRegeneratePost(int client, Handle hParams) {
 			}
 		}
 	}
-
+	
 	for (int i; i < 3; i++) {
 		int weapon = GetPlayerWeaponSlot(client, i);
 		if (IsValidEntity(weapon)) {
@@ -546,12 +546,12 @@ static MRESReturn HookWeaponBase(int entity) {
  */
 MRESReturn OnPlayerCanAirDashPre(int client) {
 	g_flAirDashDeployTime = DEFAULT_REQUIRED_DEPLOY_FOR_AIR_DASH;
-
+	
 	int activeWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
 	if (!IsValidEntity(activeWeapon)) {
 		return MRES_Ignored;
 	}
-
+	
 	// doesn't quite cover every single deploy time-related attribute, but this will do for now
 	g_flAirDashDeployTime *=
 			TF2Attrib_HookValueFloat(1.0, "mult_deploy_time", activeWeapon)
@@ -562,11 +562,11 @@ MRESReturn OnPlayerCanAirDashPre(int client) {
 static void HookWeaponBaseGun(int entity, const char[] className) {
 	DHookEntity(g_DHookWeaponGetProjectileSpeed, true, entity,
 			.callback = OnGetProjectileSpeedPost);
-
+	
 	if (strncmp(className, "tf_weapon_jar", strlen("tf_weapon_jar")) != 0) {
 		DHookEntity(g_DHookFireJar, false, entity, .callback = OnFireJarPre);
 	}
-
+	
 	if (StrEqual(className, "tf_weapon_scattergun")
 			|| StrEqual(className, "tf_weapon_soda_popper")) {
 		DHookEntity(g_DHookWeaponSendAnim, false, entity, .callback = OnScattergunSendAnimPre);
@@ -581,15 +581,15 @@ void EnergyRingPostSpawnPost(int entref) {
 	if (!IsValidEntity(entref)) {
 		return;
 	}
-
+	
 	int weapon = GetEntPropEnt(entref, Prop_Send, "m_hOriginalLauncher");
 	if (!IsValidEntity(weapon)) {
 		return;
 	}
-
+	
 	float vecVelocity[3];
 	GetEntPropVector(entref, Prop_Data, "m_vecAbsVelocity", vecVelocity);
-
+	
 	ScaleVector(vecVelocity, TF2Attrib_HookValueFloat(1.0, "mult_projectile_speed", weapon));
 	TeleportEntity(entref, NULL_VECTOR, NULL_VECTOR, vecVelocity);
 }
@@ -600,18 +600,18 @@ void EnergyRingPostSpawnPost(int entref) {
  */
 MRESReturn OnScattergunSendAnimPre(int entity, Handle hReturn, Handle hParams) {
 	int activity = DHookGetParam(hParams, 1);
-
+	
 	if (!TF2Attrib_HookValueInt(0, "set_scattergun_has_knockback", entity)) {
 		return MRES_Ignored;
 	}
-
+	
 	// dumb hack -- short of using econ data for schema-based markers this will have to do
 	switch (GetEntProp(entity, Prop_Send, "m_iItemDefinitionIndex")) {
 		case TF_ITEMDEF_FORCE_A_NATURE, TF_ITEMDEF_FORCE_A_NATURE_FESTIVE: {
 			return MRES_Ignored;
 		}
 	}
-
+	
 	// bypass the ITEM2 conversion table and call the baseclass's SendWeaponAnim
 	DHookSetReturn(hReturn, SendWeaponAnim(entity, activity));
 	return MRES_Supercede;
@@ -625,10 +625,10 @@ MRESReturn OnGetEnergyRingDamagePost(int entity, Handle hReturn) {
 	if (!IsValidEntity(weapon)) {
 		return MRES_Ignored;
 	}
-
+	
 	float damage = DHookGetReturn(hReturn);
 	DHookSetReturn(hReturn, TF2Attrib_HookValueFloat(damage, "mult_dmg", weapon));
-
+	
 	return MRES_Supercede;
 }
 
@@ -638,12 +638,12 @@ MRESReturn OnGetEnergyRingDamagePost(int entity, Handle hReturn) {
  */
 MRESReturn OnGetGrenadeDamageRadiusPost(int grenade, Handle hReturn) {
 	float radius = DHookGetReturn(hReturn);
-
+	
 	int weapon = GetEntPropEnt(grenade, Prop_Send, "m_hOriginalLauncher");
 	if (!IsValidEntity(weapon)) {
 		return MRES_Ignored;
 	}
-
+	
 	DHookSetReturn(hReturn, TF2Attrib_HookValueFloat(radius, "mult_explosion_radius", weapon));
 	return MRES_Supercede;
 }
@@ -664,9 +664,9 @@ MRESReturn OnGrenadeInit(int grenade, Handle hParams) {
  */
 MRESReturn OnGetProjectileSpeedPost(int weapon, Handle hReturn) {
 	float speed = DHookGetReturn(hReturn);
-
+	
 	// TODO how should we deal with items that already have a speed?
-
+	
 	switch (TF2Attrib_HookValueInt(0, "override_projectile_type", weapon)) {
 		case Projectile_Pipebomb, Projectile_Cannonball: {
 			// CTFGrenadeLauncher::GetProjectileSpeed()
@@ -696,7 +696,7 @@ MRESReturn OnGetProjectileSpeedPost(int weapon, Handle hReturn) {
 			speed = FindConVar("tf_grapplinghook_projectile_speed").FloatValue;
 		}
 	}
-
+	
 	if (speed) {
 		DHookSetReturn(hReturn, speed);
 		return MRES_Supercede;
@@ -714,10 +714,10 @@ MRESReturn OnRocketExplodePost(int rocket, Handle hParams) {
 		float origin[3], angles[3];
 		GetEntPropVector(rocket, Prop_Data, "m_vecAbsOrigin", origin);
 		GetEntPropVector(rocket, Prop_Data, "m_angAbsRotation", angles);
-
+		
 		TE_SetupTFParticleEffect("explosionTrail_seeds_mvm", origin, .vecAngles = angles);
 		TE_SendToAll();
-
+		
 		TE_SetupTFParticleEffect("fluidSmokeExpl_ring_mvm", origin, .vecAngles = angles);
 		TE_SendToAll();
 	}
@@ -730,7 +730,7 @@ MRESReturn OnFireJarPre(int weapon, Handle hReturn, Handle hParams) {
 	if (owner < 1 || owner > MaxClients) {
 		return MRES_Ignored;
 	}
-
+	
 	char className[64];
 	switch (TF2Attrib_HookValueInt(0, "override_projectile_type", weapon)) {
 		case Projectile_Jar, Projectile_JarBread, Projectile_JarFestive: {
@@ -756,53 +756,53 @@ MRESReturn OnFireJarPre(int weapon, Handle hReturn, Handle hParams) {
 	if (!className[0]) {
 		return MRES_Ignored;
 	}
-
+	
 	float vecSpawnOrigin[3];
 	TF2Util_GetPlayerShootPosition(owner, vecSpawnOrigin);
-
+	
 	float angEyes[3], vecEyeForward[3], vecEyeRight[3], vecEyeUp[3];
-
+	
 	GetClientEyeAngles(owner, angEyes);
 	GetAngleVectors(angEyes, vecEyeForward, vecEyeRight, vecEyeUp);
-
+	
 	ScaleVector(vecEyeForward, 16.0);
 	AddVectors(vecSpawnOrigin, vecEyeForward, vecSpawnOrigin);
-
+	
 	// fire projectile from center
 	if (!TF2Attrib_HookValueInt(0, "centerfire_projectile", weapon)) {
 		ScaleVector(vecEyeRight, 8.0); // TODO check if viewmodels are flipped
 		AddVectors(vecSpawnOrigin, vecEyeRight, vecSpawnOrigin);
 	}
-
+	
 	ScaleVector(vecEyeUp, -6.0);
 	AddVectors(vecSpawnOrigin, vecEyeUp, vecSpawnOrigin);
-
+	
 	float vecSpawnAngles[3];
 	GetEntPropVector(owner, Prop_Data, "m_angAbsRotation", vecSpawnAngles);
-
+	
 	GetAngleVectors(angEyes, vecEyeForward, vecEyeRight, vecEyeUp);
-
+	
 	float vecVelocity[3];
 	vecVelocity = vecEyeForward;
 	ScaleVector(vecVelocity, 1200.0);
 	ScaleVector(vecEyeUp, 200.0);
-
+	
 	AddVectors(vecVelocity, vecEyeUp, vecVelocity);
-
+	
 	int jar = CreateEntityByName(className);
 	DispatchSpawn(jar);
 	TeleportEntity(jar, vecSpawnOrigin, vecSpawnAngles, NULL_VECTOR);
-
+	
 	float vecAngVelocity[3];
 	vecAngVelocity[0] = 600.0;
 	vecAngVelocity[1] = GetRandomFloat(-1200.0, 1200.0);
-
+	
 	SDKCall(g_SDKCallInitGrenade, jar, vecVelocity, vecAngVelocity, owner, 0, 3.0);
 	SetEntProp(jar, Prop_Data, "m_bIsLive", true);
-
+	
 	SetEntPropEnt(jar, Prop_Send, "m_hOriginalLauncher", weapon);
 	SetEntPropEnt(jar, Prop_Send, "m_hThrower", owner);
-
+	
 	DHookSetReturn(hReturn, false);
 	return MRES_Supercede;
 }
@@ -810,13 +810,13 @@ MRESReturn OnFireJarPre(int weapon, Handle hReturn, Handle hParams) {
 /**
  * Hardcoded lookup table to fix projectiles being shot from the wrong side.  The projectiles
  * correspond to the weapons that override `IsViewmodelFlipped`.
- *
+ * 
  * This fix only affects base items - the weapons with flipped viewmodels will still shoot from
  * the wrong side if their projectile type is overwritten.
  */
 MRESReturn OnWeaponBaseVMFlippedPost(int weapon, Handle hReturn) {
 	bool flipped = DHookGetReturn(hReturn);
-
+	
 	bool invert;
 	switch (TF2Attrib_HookValueInt(0, "override_projectile_type", weapon)) {
 		case Projectile_NoOverride: {
@@ -835,7 +835,7 @@ MRESReturn OnWeaponBaseVMFlippedPost(int weapon, Handle hReturn) {
 			}
 		}
 	}
-
+	
 	if (invert) {
 		DHookSetReturn(hReturn, !flipped);
 		return MRES_Override;
@@ -853,7 +853,7 @@ MRESReturn OnWeaponBaseGunZoomInPost(int weapon) {
 		return MRES_Ignored;
 	}
 	int fov = RoundFloat(TF2Attrib_HookValueFloat(20.0, "mult_zoom_fov", weapon));
-
+	
 	if (fov <= 75) {
 		SetEntProp(owner, Prop_Send, "m_iFOV", fov);
 	} else {
@@ -891,7 +891,7 @@ MRESReturn OnPlayerAttributesChangedPost(Address pShared, Handle hParams) {
 			TF2Attrib_ClearCache(weapon);
 		}
 	}
-
+	
 	for (int i, n = TF2Util_GetPlayerWearableCount(client); i < n; i++) {
 		int wearable = TF2Util_GetPlayerWearable(client, i);
 		if (IsValidEntity(wearable)) {
@@ -916,7 +916,7 @@ void PostSpawnUnsetItemCharge(int weapon) {
 		// this item doesn't use the legacy recharge method (Gas Passer uses a new interface)
 		return;
 	}
-
+	
 	/**
 	 * If we have an item that wants to not have their meter filled on spawn, zero out their
 	 * ammo.  We also set `m_flLastFireTime` and `m_flEffectBarRegenTime` since both of those
@@ -948,7 +948,7 @@ void ProcessItemRecharge(int weapon) {
 		}
 		return;
 	}
-
+	
 	/**
 	 * If we have an item that isn't fully charged, unset our ammo count for it; we don't have
 	 * to do anything with `m_flEffectBarRegenTime` since it'll only update itself when ammo is
@@ -980,13 +980,13 @@ void ApplyItemChargeDamageModifier(int weapon, float flDamage) {
 		// item_meter_charge_type is not set to recharge when dealing damage
 		return;
 	}
-
+	
 	float flRechargeTime = GetEffectBarRechargeTime(weapon);
 	if (flRechargeTime <= 0.0) {
 		// this item doesn't use the legacy recharge method (Gas Passer uses a new interface)
 		return;
 	}
-
+	
 	float flDamageForFullCharge = TF2Attrib_HookValueFloat(0.0,
 			"item_meter_damage_for_full_charge", weapon);
 	if (flDamageForFullCharge <= 0.0) {
@@ -994,11 +994,11 @@ void ApplyItemChargeDamageModifier(int weapon, float flDamage) {
 				weapon);
 		return;
 	}
-
+	
 	// reduce the amount of time until recharge
 	float flCurrentRegenTime = GetEntPropFloat(weapon, Prop_Send, "m_flEffectBarRegenTime");
 	flCurrentRegenTime -= (flDamage / flDamageForFullCharge) * flRechargeTime;
-
+	
 	SetEntPropFloat(weapon, Prop_Send, "m_flEffectBarRegenTime", flCurrentRegenTime);
 }
 
@@ -1012,7 +1012,7 @@ void ApplyItemBurnModifier(int weapon, int victim) {
 		// (they should've been set on fire due to set_dmgtype_ignite)
 		return;
 	}
-
+	
 	float burnTime = TF2Attrib_HookValueFloat(0.0, "set_dmgtype_ignite", weapon);
 	if (burnTime > 10.0) {
 		// hack to limit the burn duration as the game does, for now
@@ -1020,7 +1020,7 @@ void ApplyItemBurnModifier(int weapon, int victim) {
 		// but that doesn't take a weapon - maybe this is something that can go in tf2utils
 		burnTime = 10.0;
 	}
-
+	
 	float currentBurnTime = TF2Util_GetPlayerBurnDuration(victim);
 	if (burnTime > currentBurnTime) {
 		TF2Util_SetPlayerBurnDuration(victim, burnTime);
@@ -1034,14 +1034,14 @@ MeterType GetItemMeterType(int item) {
 	if (!TF2Util_IsEntityWeapon(item)) {
 		char classname[64];
 		GetEntityClassname(item, classname, sizeof(classname));
-
+		
 		if (StrEqual(classname, "tf_wearable_demoshield")) {
 			return Meter_PlayerChargeMeter;
 		}
-
+		
 		return Meter_Invalid;
 	}
-
+	
 	switch (TF2Util_GetWeaponID(item)) {
 		case TF_WEAPON_LUNCHBOX, TF_WEAPON_JAR, TF_WEAPON_JAR_MILK, TF_WEAPON_JAR_GAS,
 				TF_WEAPON_BAT_WOOD, TF_WEAPON_BAT_GIFTWRAP, TF_WEAPON_CLEAVER: {
