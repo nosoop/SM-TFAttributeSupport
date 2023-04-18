@@ -33,6 +33,7 @@ public Plugin myinfo = {
 
 Handle g_DHookBaseEntityGetDamage;
 Handle g_DHookWeaponSendAnim;
+Handle g_DHookGrenadeInit;
 Handle g_DHookGrenadeGetDamageRadius;
 Handle g_DHookWeaponGetProjectileSpeed;
 Handle g_DHookFireJar;
@@ -137,9 +138,12 @@ public void OnPluginStart() {
 	g_DHookFireJar = DHookCreateFromConf(hGameConf, "CTFWeaponBaseGun::FireJar()");
 	
 	g_DHookRocketExplode = DHookCreateFromConf(hGameConf, "CTFBaseRocket::Explode()");
-
+	
+	g_DHookGrenadeInit = DHookCreateFromConf(hGameConf,
+			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
+	
 	g_DHookPlayerEventKilled = DHookCreateFromConf(hGameConf, "CBasePlayer::Event_Killed()");
-
+	
 	g_DHookPlayerRegenerate = DHookCreateFromConf(hGameConf, "CTFPlayer::Regenerate()");
 	DHookEnableDetour(g_DHookPlayerRegenerate, false, OnPlayerRegeneratePre);
 	DHookEnableDetour(g_DHookPlayerRegenerate, true, OnPlayerRegeneratePost);
