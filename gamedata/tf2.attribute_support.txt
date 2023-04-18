@@ -189,6 +189,70 @@
 					}
 				}
 			}
+			"CBasePlayer::Event_Killed()"
+			{
+				"offset"	"CBasePlayer::Event_Killed()"
+				"hooktype"	"entity"
+				"return"	"void"
+				"this"		"entity"
+				"arguments"
+				{
+					"info"
+					{
+						"type"	"objectptr"
+					}
+				}
+			}
+			"CTFPlayer::CreateRagdollEntity()"
+			{
+				"signature"		"CTFPlayer::CreateRagdollEntity()"
+				"callconv"		"thiscall"
+				"return"		"void"
+				"this"			"entity"
+				"arguments"
+				{
+					"gib"
+					{
+						"type"	"bool"
+					}
+					"burning"
+					{
+						"type"	"bool"
+					}
+					"electrocuted"
+					{
+						"type"	"bool"
+					}
+					"onground"
+					{
+						"type"	"bool"
+					}
+					"cloaked"
+					{
+						"type"	"bool"
+					}
+					"gold_ragdoll"
+					{
+						"type"	"bool"
+					}
+					"ice_ragdoll"
+					{
+						"type"	"bool"
+					}
+					"become_ash"
+					{
+						"type"	"bool"
+					}
+					"damagecustom"
+					{
+						"type"	"int"
+					}
+					"crit_on_hard_hit"
+					{
+						"type"	"bool"
+					}
+				}
+			}
 		}
 		"MemPatches"
 		{
@@ -270,6 +334,11 @@
 				"windows"	"481"
 				"linux"		"488"
 			}
+			"CBasePlayer::Event_Killed()"
+			{
+				"windows"	"68"
+				"linux"		"69"
+			}
 			
 			"CGameTrace::m_pEnt"
 			{
@@ -333,6 +402,12 @@
 				"library"	"server"
 				"linux"		"@_ZN18CTFWeaponBaseMelee10OnSwingHitER10CGameTrace"
 				"windows"	"\x55\x8B\xEC\x81\xEC\x50\x01\x00\x00\x53\x56\x57\x8B\xD9"
+			}
+			"CTFPlayer::CreateRagdollEntity()"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer19CreateRagdollEntityEbbbbbbbbib"
+				"windows"	"\x2A\x2A\x2A\x2A\x2A\x2A\xF1\x8B\x8E\x2A\x12\x00\x00\x57"
 			}
 		}
 	}
