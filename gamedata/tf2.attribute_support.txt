@@ -189,12 +189,12 @@
 					}
 				}
 			}
-			"CBasePlayer::Event_Killed()"
+			"CTFPlayer::Event_Killed().EfE70Msax8M"
 			{
-				"offset"	"CBasePlayer::Event_Killed()"
-				"hooktype"	"entity"
-				"return"	"void"
-				"this"		"entity"
+				"signature"		"CTFPlayer::Event_Killed().EfE70Msax8M"
+				"callconv"		"thiscall"
+				"return"		"void"
+				"this"			"entity"
 				"arguments"
 				{
 					"info"
@@ -334,11 +334,6 @@
 				"windows"	"481"
 				"linux"		"488"
 			}
-			"CBasePlayer::Event_Killed()"
-			{
-				"windows"	"68"
-				"linux"		"69"
-			}
 			
 			"CGameTrace::m_pEnt"
 			{
@@ -366,6 +361,13 @@
 				"library"	"server"
 				"linux"		"@_ZNK9CTFPlayer10CanAirDashEv"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x08\x57\x8B\xF9\xF7\x87\x2A\x2A\x00\x00\x00\x00\x04\x00"
+			}
+			"CTFPlayer::Event_Killed().EfE70Msax8M"
+			{
+				// unique x-ref to string 'mvm_sniper_headshot_currency'
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer12Event_KilledERK15CTakeDamageInfo"
+				"windows"	"\x55\x8B\xEC\x81\xEC\x2A\x02\x00\x00\x53\x56\x8B\x75\x08\x8B\xD9\x57"
 			}
 			"CTFPlayerShared::ApplyAttributeToPlayer()"
 			{

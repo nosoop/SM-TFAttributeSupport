@@ -197,6 +197,14 @@ public void OnPluginStart() {
 	}
 	DHookEnableDetour(dtGrenadeInit, true, OnGrenadeInit);
 	
+	// unique name because dhooks uses the name globally and other plugins may also use the name
+	Handle dtPlayerKilled = DHookCreateFromConf(hGameConf, "CTFPlayer::Event_Killed().EfE70Msax8M");
+	if (!dtPlayerKilled) {
+		SetFailState("Failed to create detour " ... "CTFPlayer::Event_Killed()");
+	}
+	DHookEnableDetour(dtPlayerKilled, false, OnPlayerKilledPre);
+	
+	
 	Handle dtCreateRagdoll = DHookCreateFromConf(hGameConf, "CTFPlayer::CreateRagdollEntity()");
 	if (!dtCreateRagdoll) {
 		SetFailState("Failed to create detour " ... "CTFPlayer::CreateRagdollEntity()");
@@ -340,7 +348,6 @@ public void OnClientPutInServer(int client) {
 	SDKHook(client, SDKHook_SpawnPost, OnClientSpawnPost);
 	SDKHook(client, SDKHook_OnTakeDamageAlivePost, OnClientTakeDamageAlivePost);
 	SDKHook(client, SDKHook_GroundEntChangedPost, OnClientGroundEntChangedPost);
-	DHookEntity(g_DHookPlayerEventKilled, false, client, .callback = DHookEvent_KilledPre);
 }
 
 /**
@@ -1061,7 +1068,7 @@ MeterType GetItemMeterType(int item) {
 	return Meter_Invalid;
 }
 
-MRESReturn DHookEvent_KilledPre(int client, Handle hParams) {
+MRESReturn OnPlayerKilledPre(int client, Handle hParams) {
 	if (DHookIsNullParam(hParams, 1)) {
 		return MRES_Ignored;
 	}
