@@ -1069,17 +1069,17 @@ MeterType GetItemMeterType(int item) {
 }
 
 MRESReturn OnPlayerKilledPre(int client, Handle hParams) {
+	g_bShouldTurnToIce[client] = false;
 	if (DHookIsNullParam(hParams, 1)) {
 		return MRES_Ignored;
 	}
 	
 	int weapon = DHookGetParamObjectPtrVar(hParams, 1, offs_CTakeDamageInfo_hWeapon,
 			ObjectValueType_Ehandle);
-	if (IsValidEntity(weapon)) {
-		if (TF2Attrib_HookValueInt(0, "set_turn_to_ice", weapon)) {
-			g_bShouldTurnToIce[client] = true;
-		}
-	}
+	
+	g_bShouldTurnToIce[client] = IsValidEntity(weapon)
+			&& TF2Attrib_HookValueInt(0, "set_turn_to_ice", weapon);
+	
 	return MRES_Ignored;
 }
 
