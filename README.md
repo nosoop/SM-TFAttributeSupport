@@ -4,7 +4,7 @@ Hooks into all sorts of game functions so they work with attributes correctly wh
 previously didn't.  This allows other modders to use the game's attributes in previously
 unsupported cases, instead of needing their own fixes.
 
-Improves support for:
+Improves support for, among other things:
 
 - Effect radius of Jarate-based entities with blast radius-modifying attributes.
 - Pomson / Righteous Bison projectile speeds and damage amounts.
@@ -43,23 +43,21 @@ owner deals damage.
 - `bot custom jump particle` can now be used on players in non-MvM mode.
   - This portion was sponsored by @JohnnyAlexanderTF2.  Thanks!
 - The delay on being granted triple jumps with the Atomizer now scales with `mult_deploy_time`
-and `mult_single_wep_deploy_time`.
+and `mult_single_wep_deploy_time`, instead of being set to a fixed 0.7 second delay.
 - The addition / removal of player attributes now clears the attribute cache on the player's
 equipment.
+- The `sniper zoom penalty` attribute that is present but unused in the schema is now
+implemented.
 
 ## Dependencies
 
-Requires my personal fork of [TF2Attributes][], which exposes the game's attribute value hooks
-as native functions for plugins to use, [TF2Utils][], which provides common gameplay-related
+This plugin depends on [TF2Attributes][], which exposes the game's attribute value hooks as
+native functions for plugins to use, [TF2Utils][], which provides common gameplay-related
 functions for plugins to work with, and [Source Scramble][], which handles patching memory for
 certain functions.
 
-If you are on SourceMod versions below 1.11, you will also need the
-[detour-supporting version of DHooks][dynhooks].
-
-[TF2Attributes]: https://github.com/nosoop/tf2attributes
+[TF2Attributes]: https://github.com/FlaminSarge/tf2attributes
 [TF2Utils]: https://github.com/nosoop/SM-TFUtils
-[dynhooks]: https://forums.alliedmods.net/showpost.php?p=2588686&postcount=589
 [sigsegv's documentation on item meters]: https://gist.github.com/sigsegv-mvm/43e76b30cedca0717e88988ac9172526
 [Custom Weapons X]: https://github.com/nosoop/SM-TFCustomWeaponsX
 [Source Scramble]: https://github.com/nosoop/SMExt-SourceScramble
