@@ -33,12 +33,10 @@ public Plugin myinfo = {
 
 Handle g_DHookBaseEntityGetDamage;
 Handle g_DHookWeaponSendAnim;
-Handle g_DHookGrenadeInit;
 Handle g_DHookGrenadeGetDamageRadius;
 Handle g_DHookWeaponGetProjectileSpeed;
 Handle g_DHookFireJar;
 Handle g_DHookRocketExplode;
-Handle g_DHookPlayerEventKilled;
 
 Handle g_DHookPlayerRegenerate;
 
@@ -138,11 +136,6 @@ public void OnPluginStart() {
 	g_DHookFireJar = DHookCreateFromConf(hGameConf, "CTFWeaponBaseGun::FireJar()");
 	
 	g_DHookRocketExplode = DHookCreateFromConf(hGameConf, "CTFBaseRocket::Explode()");
-	
-	g_DHookGrenadeInit = DHookCreateFromConf(hGameConf,
-			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
-	
-	g_DHookPlayerEventKilled = DHookCreateFromConf(hGameConf, "CBasePlayer::Event_Killed()");
 	
 	g_DHookPlayerRegenerate = DHookCreateFromConf(hGameConf, "CTFPlayer::Regenerate()");
 	DHookEnableDetour(g_DHookPlayerRegenerate, false, OnPlayerRegeneratePre);
@@ -547,7 +540,8 @@ MRESReturn OnPlayerRegeneratePost(int client, Handle hParams) {
 	return MRES_Ignored;
 }
 
-static MRESReturn HookWeaponBase(int entity) {
+static void HookWeaponBase(int entity) {
+	#pragma unused entity
 	// currently stubbed
 }
 
