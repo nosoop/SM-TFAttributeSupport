@@ -828,9 +828,11 @@ MRESReturn OnWeaponBaseVMFlippedPost(int weapon, Handle hReturn) {
 		case Projectile_NoOverride: {
 			// don't process weapons that have no projectile overrides
 		}
-		case Projectile_CrossbowBolt, Projectile_EnergyBall, Projectile_EnergyRing,
-				Projectile_RescueClaw: {
+		case Projectile_CrossbowBolt, Projectile_EnergyBall, Projectile_EnergyRing: {
 			invert = true;
+		}
+		case Projectile_RescueClaw: {
+			invert = TF2Util_GetWeaponID(weapon) != TF_WEAPON_SHOTGUN_BUILDING_RESCUE;
 		}
 		default: {
 			switch (TF2Util_GetWeaponID(weapon)) {
