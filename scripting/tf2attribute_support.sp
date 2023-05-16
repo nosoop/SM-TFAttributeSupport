@@ -22,7 +22,7 @@
 #include <tf2attributes>
 #include <tf2utils>
 
-#define PLUGIN_VERSION "1.13.0"
+#define PLUGIN_VERSION "1.14.0"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -197,6 +197,11 @@ public void OnPluginStart() {
 	}
 	DHookEnableDetour(dtPlayerKilled, false, OnPlayerKilledPre);
 	
+	Handle dtPlayerCalculateMaxSpeed = DHookCreateFromConf(hGameConf, "CTFPlayer::TeamFortress_CalculateMaxSpeed()");
+	if (!dtPlayerCalculateMaxSpeed) {
+		SetFailState("Failed to create detour " ... "CTFPlayer::TeamFortress_CalculateMaxSpeed()");
+	}
+	DHookEnableDetour(dtPlayerCalculateMaxSpeed, true, OnPlayerCalculateMaxSpeedPost);
 	
 	Handle dtCreateRagdoll = DHookCreateFromConf(hGameConf, "CTFPlayer::CreateRagdollEntity()");
 	if (!dtCreateRagdoll) {
@@ -563,6 +568,18 @@ MRESReturn OnPlayerCanAirDashPre(int client) {
 			TF2Attrib_HookValueFloat(1.0, "mult_deploy_time", activeWeapon)
 			* TF2Attrib_HookValueFloat(1.0, "mult_single_wep_deploy_time", activeWeapon);
 	return MRES_Ignored;
+}
+
+MRESReturn OnPlayerCalculateMaxSpeedPost(int client, Handle hReturn, Handle hParams) {
+	float flSpeed = DHookGetReturn(hReturn);
+	
+	int activeWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+	if (!IsValidEntity(activeWeapon)) {
+		return MRES_Ignored;
+	}
+	flSpeed = TF2Attrib_HookValueFloat(flSpeed, "mult_move_speed_when_active", activeWeapon);
+	DHookSetReturn(hReturn, flSpeed);
+	return MRES_Override;
 }
 
 static void HookWeaponBaseGun(int entity, const char[] className) {

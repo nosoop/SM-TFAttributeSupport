@@ -71,6 +71,20 @@
 				"this"			"entity"
 				"return"		"bool"
 			}
+			"CTFPlayer::TeamFortress_CalculateMaxSpeed()"
+			{
+				"signature"		"CTFPlayer::TeamFortress_CalculateMaxSpeed()"
+				"callconv"		"thiscall"
+				"this"			"entity"
+				"return"		"float"
+				"arguments"
+				{
+					"ignore_special_ability"
+					{
+						"type"	"bool"
+					}
+				}
+			}
 			"CTFPlayerShared::ApplyAttributeToPlayer()"
 			{
 				"signature"		"CTFPlayerShared::ApplyAttributeToPlayer()"
@@ -368,6 +382,13 @@
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer12Event_KilledERK15CTakeDamageInfo"
 				"windows"	"\x55\x8B\xEC\x81\xEC\x2A\x02\x00\x00\x53\x56\x8B\x75\x08\x8B\xD9\x57"
+			}
+			"CTFPlayer::TeamFortress_CalculateMaxSpeed()"
+			{
+				// contains unique string "mult_player_aiming_movespeed"
+				"library"	"server"
+				"linux"		"@_ZNK9CTFPlayer30TeamFortress_CalculateMaxSpeedEb"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x18\x83\x3D\x2A\x2A\x2A\x2A\x00\x56"
 			}
 			"CTFPlayerShared::ApplyAttributeToPlayer()"
 			{
