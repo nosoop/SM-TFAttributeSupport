@@ -71,7 +71,7 @@
 				"this"			"entity"
 				"return"		"bool"
 			}
-			"CTFPlayer::TeamFortress_CalculateMaxSpeed()"
+			"CTFPlayer::TeamFortress_CalculateMaxSpeed().HXj78K8CTTI"
 			{
 				"signature"		"CTFPlayer::TeamFortress_CalculateMaxSpeed()"
 				"callconv"		"thiscall"

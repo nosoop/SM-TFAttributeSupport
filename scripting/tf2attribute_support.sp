@@ -22,7 +22,7 @@
 #include <tf2attributes>
 #include <tf2utils>
 
-#define PLUGIN_VERSION "1.14.0"
+#define PLUGIN_VERSION "1.14.1"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -197,7 +197,7 @@ public void OnPluginStart() {
 	}
 	DHookEnableDetour(dtPlayerKilled, false, OnPlayerKilledPre);
 	
-	Handle dtPlayerCalculateMaxSpeed = DHookCreateFromConf(hGameConf, "CTFPlayer::TeamFortress_CalculateMaxSpeed()");
+	Handle dtPlayerCalculateMaxSpeed = DHookCreateFromConf(hGameConf, "CTFPlayer::TeamFortress_CalculateMaxSpeed().HXj78K8CTTI");
 	if (!dtPlayerCalculateMaxSpeed) {
 		SetFailState("Failed to create detour " ... "CTFPlayer::TeamFortress_CalculateMaxSpeed()");
 	}
