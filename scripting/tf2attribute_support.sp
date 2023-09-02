@@ -9,7 +9,7 @@
 
 #include <sdktools>
 #include <sdkhooks>
-#include <dhooks>
+#include <dhooks_gameconf_shim>
 
 #include <stocksoup/memory>
 #include <stocksoup/tf/entity_prop_stocks>
@@ -119,42 +119,44 @@ public void OnPluginStart() {
 	Handle hGameConf = LoadGameConfigFile("tf2.attribute_support");
 	if (!hGameConf) {
 		SetFailState("Failed to load gamedata (tf2.attribute_support).");
+	} else if (!ReadDHooksDefinitions("tf2.attribute_support")) {
+		SetFailState("Failed to read DHooks definitions (tf2.attribute_support).");
 	}
 	
-	g_DHookBaseEntityGetDamage = DHookCreateFromConf(hGameConf, "CBaseEntity::GetDamage()");
+	g_DHookBaseEntityGetDamage = GetDHooksDefinition(hGameConf, "CBaseEntity::GetDamage()");
 	
 	voffs_SendWeaponAnim = GameConfGetOffset(hGameConf, "CBaseCombatWeapon::SendWeaponAnim()");
-	g_DHookWeaponSendAnim = DHookCreateFromConf(hGameConf,
+	g_DHookWeaponSendAnim = GetDHooksDefinition(hGameConf,
 			"CBaseCombatWeapon::SendWeaponAnim()");
 	
-	g_DHookGrenadeGetDamageRadius = DHookCreateFromConf(hGameConf,
+	g_DHookGrenadeGetDamageRadius = GetDHooksDefinition(hGameConf,
 			"CBaseGrenade::GetDamageRadius()");
 	
-	g_DHookWeaponGetProjectileSpeed = DHookCreateFromConf(hGameConf,
+	g_DHookWeaponGetProjectileSpeed = GetDHooksDefinition(hGameConf,
 			"CTFWeaponBaseGun::GetProjectileSpeed()");
 	
-	g_DHookFireJar = DHookCreateFromConf(hGameConf, "CTFWeaponBaseGun::FireJar()");
+	g_DHookFireJar = GetDHooksDefinition(hGameConf, "CTFWeaponBaseGun::FireJar()");
 	
-	g_DHookRocketExplode = DHookCreateFromConf(hGameConf, "CTFBaseRocket::Explode()");
+	g_DHookRocketExplode = GetDHooksDefinition(hGameConf, "CTFBaseRocket::Explode()");
 	
-	g_DHookPlayerRegenerate = DHookCreateFromConf(hGameConf, "CTFPlayer::Regenerate()");
+	g_DHookPlayerRegenerate = GetDHooksDefinition(hGameConf, "CTFPlayer::Regenerate()");
 	DHookEnableDetour(g_DHookPlayerRegenerate, false, OnPlayerRegeneratePre);
 	DHookEnableDetour(g_DHookPlayerRegenerate, true, OnPlayerRegeneratePost);
 	
-	Handle dtPlayerCanAirDash = DHookCreateFromConf(hGameConf, "CTFPlayer::CanAirDash()");
+	Handle dtPlayerCanAirDash = GetDHooksDefinition(hGameConf, "CTFPlayer::CanAirDash()");
 	if (!dtPlayerCanAirDash) {
 		SetFailState("Failed to create detour " ... "CTFPlayer::CanAirDash()");
 	}
 	DHookEnableDetour(dtPlayerCanAirDash, false, OnPlayerCanAirDashPre);
 	
-	Handle dtSharedPlayerRemoveAttribute = DHookCreateFromConf(hGameConf,
+	Handle dtSharedPlayerRemoveAttribute = GetDHooksDefinition(hGameConf,
 			"CTFPlayerShared::RemoveAttributeFromPlayer()");
 	if (!dtSharedPlayerRemoveAttribute) {
 		SetFailState("Failed to create detour CTFPlayerShared::RemoveAttributeFromPlayer()");
 	}
 	DHookEnableDetour(dtSharedPlayerRemoveAttribute, true, OnPlayerAttributesChangedPost);
 	
-	Handle dtSharedPlayerApplyAttribute = DHookCreateFromConf(hGameConf,
+	Handle dtSharedPlayerApplyAttribute = GetDHooksDefinition(hGameConf,
 			"CTFPlayerShared::ApplyAttributeToPlayer()");
 	if (!dtSharedPlayerApplyAttribute) {
 		SetFailState("Failed to create detour CTFPlayerShared::ApplyAttributeToPlayer()");
@@ -164,46 +166,46 @@ public void OnPluginStart() {
 	// of them here for consistency's sake
 	DHookEnableDetour(dtSharedPlayerApplyAttribute, true, OnPlayerAttributesChangedPost);
 	
-	Handle dtWeaponBaseVMFlipped = DHookCreateFromConf(hGameConf,
+	Handle dtWeaponBaseVMFlipped = GetDHooksDefinition(hGameConf,
 			"CTFWeaponBase::IsViewModelFlipped()");
 	if (!dtWeaponBaseVMFlipped) {
 		SetFailState("Failed to create detour " ... "CTFWeaponBase::IsViewModelFlipped()");
 	}
 	DHookEnableDetour(dtWeaponBaseVMFlipped, true, OnWeaponBaseVMFlippedPost);
 	
-	Handle dtWeaponBaseGunZoomIn = DHookCreateFromConf(hGameConf, "CTFWeaponBaseGun::ZoomIn()");
+	Handle dtWeaponBaseGunZoomIn = GetDHooksDefinition(hGameConf, "CTFWeaponBaseGun::ZoomIn()");
 	if (!dtWeaponBaseGunZoomIn) {
 		SetFailState("Failed to create detour " ... "CTFWeaponBaseGun::ZoomIn()");
 	}
 	DHookEnableDetour(dtWeaponBaseGunZoomIn, true, OnWeaponBaseGunZoomInPost);
 	
-	Handle dtWeaponBaseMeleeSwingHit = DHookCreateFromConf(hGameConf,
+	Handle dtWeaponBaseMeleeSwingHit = GetDHooksDefinition(hGameConf,
 			"CTFWeaponBaseMelee::OnSwingHit()");
 	if (!dtWeaponBaseMeleeSwingHit) {
 		SetFailState("Failed to create detour " ... "CTFWeaponBaseMelee::OnSwingHit()");
 	}
 	DHookEnableDetour(dtWeaponBaseMeleeSwingHit, false, OnWeaponBaseMeleeSwingHitPre);
 	
-	Handle dtGrenadeInit = DHookCreateFromConf(hGameConf, "CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
+	Handle dtGrenadeInit = GetDHooksDefinition(hGameConf, "CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
 	if (!dtGrenadeInit) {
 		SetFailState("Failed to create detour " ... "CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
 	}
 	DHookEnableDetour(dtGrenadeInit, true, OnGrenadeInit);
 	
 	// unique name because dhooks uses the name globally and other plugins may also use the name
-	Handle dtPlayerKilled = DHookCreateFromConf(hGameConf, "CTFPlayer::Event_Killed().EfE70Msax8M");
+	Handle dtPlayerKilled = GetDHooksDefinition(hGameConf, "CTFPlayer::Event_Killed().EfE70Msax8M");
 	if (!dtPlayerKilled) {
 		SetFailState("Failed to create detour " ... "CTFPlayer::Event_Killed()");
 	}
 	DHookEnableDetour(dtPlayerKilled, false, OnPlayerKilledPre);
 	
-	Handle dtPlayerCalculateMaxSpeed = DHookCreateFromConf(hGameConf, "CTFPlayer::TeamFortress_CalculateMaxSpeed().HXj78K8CTTI");
+	Handle dtPlayerCalculateMaxSpeed = GetDHooksDefinition(hGameConf, "CTFPlayer::TeamFortress_CalculateMaxSpeed().HXj78K8CTTI");
 	if (!dtPlayerCalculateMaxSpeed) {
 		SetFailState("Failed to create detour " ... "CTFPlayer::TeamFortress_CalculateMaxSpeed()");
 	}
 	DHookEnableDetour(dtPlayerCalculateMaxSpeed, true, OnPlayerCalculateMaxSpeedPost);
 	
-	Handle dtCreateRagdoll = DHookCreateFromConf(hGameConf, "CTFPlayer::CreateRagdollEntity()");
+	Handle dtCreateRagdoll = GetDHooksDefinition(hGameConf, "CTFPlayer::CreateRagdollEntity()");
 	if (!dtCreateRagdoll) {
 		SetFailState("Failed to create detour " ... "CTFPlayer::CreateRagdollEntity()");
 	}
@@ -263,6 +265,7 @@ public void OnPluginStart() {
 		SetFailState("Failed to determine offset of " ... "CTakeDamageInfo::m_hWeapon");
 	}
 	
+	ClearDHooksDefinitions();
 	delete hGameConf;
 	
 	for (int i = 1; i <= MaxClients; i++) {
