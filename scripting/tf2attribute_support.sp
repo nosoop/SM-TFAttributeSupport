@@ -428,6 +428,10 @@ void OnClientGroundEntChangedPost(int client) {
 }
 
 MRESReturn OnPlayerRegeneratePre(int client, Handle hParams) {
+	if (g_SavedMeters[client] == null) {
+		return MRES_Ignored;
+	}
+	
 	g_SavedMeters[client].Clear();
 	
 	for (int i; i < 5; i++) {
@@ -488,6 +492,10 @@ MRESReturn OnPlayerRegeneratePre(int client, Handle hParams) {
 MRESReturn OnPlayerRegeneratePost(int client, Handle hParams) {
 	bool bRefillHealthAndAmmo = DHookGetParam(hParams, 1);
 	if (!bRefillHealthAndAmmo) {
+		return MRES_Ignored;
+	}
+
+	if (g_SavedMeters[client] == null) {
 		return MRES_Ignored;
 	}
 	
