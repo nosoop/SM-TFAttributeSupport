@@ -582,7 +582,7 @@ MRESReturn OnPlayerCanAirDashPre(int client) {
 }
 
 MRESReturn OnPlayerCalculateMaxSpeedPost(int client, Handle hReturn, Handle hParams) {
-	if (client < 1 || client > MaxClients) {
+	if (client < 1 || client > MaxClients || !IsClientInGame(client) || IsFakeClient(client)) {
 		return MRES_Ignored;
 	}
 	
