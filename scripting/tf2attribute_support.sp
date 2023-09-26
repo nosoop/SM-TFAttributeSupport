@@ -582,6 +582,10 @@ MRESReturn OnPlayerCanAirDashPre(int client) {
 }
 
 MRESReturn OnPlayerCalculateMaxSpeedPost(int client, Handle hReturn, Handle hParams) {
+	if (client < 1 || client > MaxClients) {
+		return MRES_Ignored;
+	}
+	
 	float flSpeed = DHookGetReturn(hReturn);
 	
 	int activeWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
