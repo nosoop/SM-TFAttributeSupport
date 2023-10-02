@@ -389,7 +389,7 @@ void OnClientTakeDamageAlivePost(int victim, int attacker, int inflictor, float 
 	if (damagecustom != TF_CUSTOM_BURNING && IsValidEntity(weapon)
 			&& TF2Util_IsEntityWeapon(weapon)) {
 		// this should not be triggered on DOT effects
-		ApplyItemBurnModifier(weapon, victim);
+		ApplyItemBurnModifier(weapon, victim, attacker);
 	}
 }
 
@@ -1041,7 +1041,7 @@ void ApplyItemChargeDamageModifier(int weapon, float flDamage) {
 /**
  * Reset the given burn timer based on `set_dmgtype_ignite`.
  */
-void ApplyItemBurnModifier(int weapon, int victim) {
+void ApplyItemBurnModifier(int weapon, int victim, int attacker) {
 	if (GetWeaponAfterburnRateOnHit(weapon) > 0.0
 			|| !TF2_IsPlayerInCondition(victim, TFCond_OnFire)) {
 		// this item has an afterburn on hit that we shouldn't override, or isn't on fire
@@ -1050,17 +1050,8 @@ void ApplyItemBurnModifier(int weapon, int victim) {
 	}
 	
 	float burnTime = TF2Attrib_HookValueFloat(0.0, "set_dmgtype_ignite", weapon);
-	if (burnTime > 10.0) {
-		// hack to limit the burn duration as the game does, for now
-		// ideally we would call into `TF2_IgnitePlayer` (which calls `CTFPlayerShared::Burn`),
-		// but that doesn't take a weapon - maybe this is something that can go in tf2utils
-		burnTime = 10.0;
-	}
-	
 	float currentBurnTime = TF2Util_GetPlayerBurnDuration(victim);
-	if (burnTime > currentBurnTime) {
-		TF2Util_SetPlayerBurnDuration(victim, burnTime);
-	}
+	TF2Util_IgnitePlayer(victim, attacker, burnTime - currentBurnTime, weapon);
 }
 
 /**
