@@ -22,7 +22,7 @@
 #include <tf2attributes>
 #include <tf2utils>
 
-#define PLUGIN_VERSION "1.14.1"
+#define PLUGIN_VERSION "1.15.0"
 public Plugin myinfo = {
 	name = "[TF2] TF2 Attribute Extended Support",
 	author = "nosoop",
@@ -54,7 +54,10 @@ int offs_CTakeDamageInfo_hWeapon;
 #define TF_ITEMDEF_FORCE_A_NATURE                45
 #define TF_ITEMDEF_FORCE_A_NATURE_FESTIVE        1078
 
-// this is dynamically set based on CTFWeaponInfo::m_flDamageRadius, but we'll just define it
+/**
+ * This is dynamically set based on CTFWeaponInfo::m_flDamageRadius and not hardcoded into the
+ * binary.  We'll just hardcode it for now.
+ */
 #define TF_DMGRADIUS_GRENADE_LAUNCHER            146.0
 
 #define DEFAULT_REQUIRED_DEPLOY_FOR_AIR_DASH     0.7
@@ -114,6 +117,8 @@ enum struct MeterInfo {
 ArrayList g_SavedMeters[MAXPLAYERS + 1];
 
 bool g_bShouldTurnToIce[MAXPLAYERS + 1] = { false, ... };
+
+int offs_CTFWeaponBaseGrenadeProj_flDetonateTime;
 
 public void OnPluginStart() {
 	Handle hGameConf = LoadGameConfigFile("tf2.attribute_support");
@@ -185,6 +190,13 @@ public void OnPluginStart() {
 		SetFailState("Failed to create detour " ... "CTFWeaponBaseMelee::OnSwingHit()");
 	}
 	DHookEnableDetour(dtWeaponBaseMeleeSwingHit, false, OnWeaponBaseMeleeSwingHitPre);
+	
+	Handle dtPipebombDetonate = GetDHooksDefinition(hGameConf,
+			"CTFGrenadePipebombProjectile::Detonate()");
+	if (!dtPipebombDetonate) {
+		SetFailState("Failed to create detour " ... "CTFGrenadePipebombProjectile::Detonate()");
+	}
+	DHookEnableDetour(dtPipebombDetonate, true, OnGrenadePipebombDetonatePost);
 	
 	Handle dtGrenadeInit = GetDHooksDefinition(hGameConf, "CTFWeaponBaseGrenadeProj::InitGrenade(int float)");
 	if (!dtGrenadeInit) {
@@ -264,6 +276,15 @@ public void OnPluginStart() {
 	if (offs_CTakeDamageInfo_hWeapon <= 0) {
 		SetFailState("Failed to determine offset of " ... "CTakeDamageInfo::m_hWeapon");
 	}
+	
+	int offs_CTFWeaponBaseGrenadeProj_hDeflectOwner = FindSendPropInfo(
+			"CTFWeaponBaseGrenadeProj", "m_hDeflectOwner");
+	if (offs_CTFWeaponBaseGrenadeProj_hDeflectOwner <= 0) {
+		SetFailState("Failed to determine offset of "
+				... "CTFWeaponBaseGrenadeProj::m_hDeflectOwner");
+	}
+	offs_CTFWeaponBaseGrenadeProj_flDetonateTime =
+			offs_CTFWeaponBaseGrenadeProj_hDeflectOwner + 0x14;
 	
 	ClearDHooksDefinitions();
 	delete hGameConf;
@@ -748,6 +769,44 @@ MRESReturn OnRocketExplodePost(int rocket, Handle hParams) {
 		float origin[3], angles[3];
 		GetEntPropVector(rocket, Prop_Data, "m_vecAbsOrigin", origin);
 		GetEntPropVector(rocket, Prop_Data, "m_angAbsRotation", angles);
+		
+		TE_SetupTFParticleEffect("explosionTrail_seeds_mvm", origin, .vecAngles = angles);
+		TE_SendToAll();
+		
+		TE_SetupTFParticleEffect("fluidSmokeExpl_ring_mvm", origin, .vecAngles = angles);
+		TE_SendToAll();
+	}
+	return MRES_Ignored;
+}
+
+/**
+ * Allows for large explosions on manually-detonated stickybombs.
+ * 
+ * There's a quirk somewhere in the game code where large explosions work perfectly fine for
+ * normal grenades and stickybombs that were automatically detonated via limit.
+ */
+MRESReturn OnGrenadePipebombDetonatePost(int grenade) {
+	if (GetEntProp(grenade, Prop_Send, "m_iType") != 1) {
+		/**
+		 * Ignore non-stickies (primary grenades also go through this code path).
+		 */
+		return MRES_Ignored;
+	} else if (GetGameTime() >=
+			GetEntDataFloat(grenade, offs_CTFWeaponBaseGrenadeProj_flDetonateTime)) {
+		/**
+		 * Check for forced det via expiry (sticky limit) - this goes through normal explosion
+		 * code and use_large_smoke_explosion works correctly there, so we don't need to handle
+		 * it ourselves.  Return early.
+		 */
+		return MRES_Ignored;
+	}
+	
+	int owner = GetEntPropEnt(grenade, Prop_Send, "m_hThrower");
+	if (0 < owner < MaxClients
+			&& TF2Attrib_HookValueInt(0, "use_large_smoke_explosion", owner)) {
+		float origin[3], angles[3];
+		GetEntPropVector(grenade, Prop_Data, "m_vecAbsOrigin", origin);
+		GetEntPropVector(grenade, Prop_Data, "m_angAbsRotation", angles);
 		
 		TE_SetupTFParticleEffect("explosionTrail_seeds_mvm", origin, .vecAngles = angles);
 		TE_SendToAll();

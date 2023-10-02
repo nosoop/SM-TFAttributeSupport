@@ -50,6 +50,13 @@
 					}
 				}
 			}
+			"CTFGrenadePipebombProjectile::Detonate()"
+			{
+				"signature"		"CTFGrenadePipebombProjectile::Detonate()"
+				"callconv"		"thiscall"
+				"this"			"entity"
+				"return"		"void"
+			}
 			"CTFPlayer::Regenerate()"
 			{
 				"signature"		"CTFPlayer::Regenerate()"
@@ -362,6 +369,14 @@
 		}
 		"Signatures"
 		{
+			"CTFGrenadePipebombProjectile::Detonate()"
+			{
+				// semi-unique x-ref to string 'stickybomb_fizzle_time'
+				// function does not contain 'grenade_no_bounce' (that's VPhysicsCollision)
+				"library"	"server"
+				"linux"		"@_ZN28CTFGrenadePipebombProjectile8DetonateEv"
+				"windows"	"\xA1\x2A\x2A\x2A\x2A\x56\x8B\xF1\xF3\x0F\x10\x40\x0C\x0F\x2F\x86\x2A\x2A\x00\x00\x0F\x86"
+			}
 			"CTFPlayer::Regenerate()"
 			{
 				// unique x-ref to string 'player_regenerate'
