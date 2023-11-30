@@ -1152,7 +1152,7 @@ MRESReturn OnPlayerKilledPre(int client, Handle hParams) {
 			ObjectValueType_Ehandle);
 	
 	g_bShouldTurnToIce[client] = IsValidEntity(weapon)
-			&& TF2Attrib_HookValueInt(0, "set_turn_to_ice", weapon);
+			&& HasEntProp(weapon, Prop_Send, "m_AttributeList") && TF2Attrib_HookValueInt(0, "set_turn_to_ice", weapon);
 	
 	return MRES_Ignored;
 }
