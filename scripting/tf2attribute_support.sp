@@ -1109,8 +1109,10 @@ void ApplyItemBurnModifier(int weapon, int victim, int attacker) {
 	}
 	
 	float burnTime = TF2Attrib_HookValueFloat(0.0, "set_dmgtype_ignite", weapon);
-	float currentBurnTime = TF2Util_GetPlayerBurnDuration(victim);
-	TF2Util_IgnitePlayer(victim, attacker, burnTime - currentBurnTime, weapon);
+	if (burnTime > 0.0) {
+		float currentBurnTime = TF2Util_GetPlayerBurnDuration(victim);
+		TF2Util_IgnitePlayer(victim, attacker, burnTime - currentBurnTime, weapon);
+	}
 }
 
 /**
