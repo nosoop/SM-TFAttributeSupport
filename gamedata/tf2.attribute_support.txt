@@ -375,21 +375,21 @@
 				// function does not contain 'grenade_no_bounce' (that's VPhysicsCollision)
 				"library"	"server"
 				"linux"		"@_ZN28CTFGrenadePipebombProjectile8DetonateEv"
-				"windows"	"\xA1\x2A\x2A\x2A\x2A\x56\x8B\xF1\xF3\x0F\x10\x40\x0C\x0F\x2F\x86\x2A\x2A\x00\x00\x0F\x86"
+				"windows"	"\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x83\xEC\x20\xF3\x0F\x10\x40\x0C"
 			}
 			"CTFPlayer::Regenerate()"
 			{
 				// unique x-ref to string 'player_regenerate'
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer10RegenerateEb"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x53\x56\x57\x8B\xF9\x8B\x07"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x5C\x53\x56\x57\x8B\xF9\x8B\x07"
 			}
 			"CTFPlayer::CanAirDash()"
 			{
 				// unique x-ref to string 'set_scout_doublejump_disabled'
 				"library"	"server"
 				"linux"		"@_ZNK9CTFPlayer10CanAirDashEv"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x08\x57\x8B\xF9\xF7\x87\x2A\x2A\x00\x00\x00\x00\x04\x00"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x08\x53\x57\x8B\xF9\x8B\x87\x2A\x2A\x00\x00\xA9\x00\x00\x04\x00"
 			}
 			"CTFPlayer::Event_Killed().EfE70Msax8M"
 			{
@@ -403,7 +403,7 @@
 				// contains unique string "mult_player_aiming_movespeed"
 				"library"	"server"
 				"linux"		"@_ZNK9CTFPlayer30TeamFortress_CalculateMaxSpeedEb"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x18\x83\x3D\x2A\x2A\x2A\x2A\x00\x56"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x18\x56\x8B\xF1\x8B\x0D\x2A\x2A\x2A\x2A"
 			}
 			"CTFPlayerShared::ApplyAttributeToPlayer()"
 			{
@@ -432,7 +432,7 @@
 				// unique instance where 3EE66666h gets moved to 'ebp' on Windows
 				"library"	"server"
 				"linux"		"@_ZN24CTFWeaponBaseGrenadeProj11InitGrenadeERK6VectorS2_P20CBaseCombatCharacterif"
-				"windows"	"\x55\x8B\xEC\x53\x56\x8B\xF1\x57\x6A\x00\x8B\x06"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x08\x53\x56\x8B\xF1\x57\x6A\x00"
 			}
 			"CTFWeaponBaseGun::ZoomIn()"
 			{
