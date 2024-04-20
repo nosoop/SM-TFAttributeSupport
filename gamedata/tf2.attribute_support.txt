@@ -282,7 +282,7 @@
 				"signature"		"CTFPlayer::CanAirDash()"
 				"linux"
 				{
-					"offset"	"126h"
+					"offset"	"B6h"
 				}
 				"windows"
 				{
