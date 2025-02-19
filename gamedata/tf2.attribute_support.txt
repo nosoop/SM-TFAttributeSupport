@@ -282,7 +282,7 @@
 				"signature"		"CTFPlayer::CanAirDash()"
 				"linux"
 				{
-					"offset"	"B6h"
+					"offset"	"CAh"
 					"verify"	"\xC1\x0F\x2F\x05\x2A\x2A\x2A\x2A"
 					"patch"		"\xC1\x0F\x2F\x05\x00\x00\x00\x00"
 				}
