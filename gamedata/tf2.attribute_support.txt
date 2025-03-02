@@ -384,7 +384,7 @@
 				// unique x-ref to string 'player_regenerate'
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer10RegenerateEb"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x5C\x53\x56\x57\x8B\xF9\x8B\x07"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x44\x53\x56\x57\x8B\xF9\x8B\x07"
 			}
 			"CTFPlayer::CanAirDash()"
 			{
@@ -434,7 +434,7 @@
 				// unique instance where 3EE66666h gets moved to 'ebp' on Windows
 				"library"	"server"
 				"linux"		"@_ZN24CTFWeaponBaseGrenadeProj11InitGrenadeERK6VectorS2_P20CBaseCombatCharacterif"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x08\x53\x56\x8B\xF1\x57\x6A\x00"
+				"windows"	"\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF1\x57\x6A\x00"
 			}
 			"CTFWeaponBaseGun::ZoomIn()"
 			{
