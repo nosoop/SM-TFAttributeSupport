@@ -282,7 +282,7 @@
 				"signature"		"CTFPlayer::CanAirDash()"
 				"linux"
 				{
-					"offset"	"CAh"
+					"offset"	"B6h"
 					"verify"	"\xC1\x0F\x2F\x05\x2A\x2A\x2A\x2A"
 					"patch"		"\xC1\x0F\x2F\x05\x00\x00\x00\x00"
 				}
@@ -299,63 +299,63 @@
 		{
 			"CBaseCombatWeapon::IsBaseCombatWeapon()"
 			{
-				"windows"	"91"
-				"linux"		"92"
+				"windows"	"92"
+				"linux"		"93"
 			}
 			"CBaseCombatWeapon::SendWeaponAnim()"
 			{
-				"windows"	"249"
-				"linux"		"255"
+				"windows"	"250"
+				"linux"		"256"
 			}
 			"CBaseEntity::GetDamage()"
 			{
-				"windows"		"134"
-				"linux"			"135"
+				"windows"		"135"
+				"linux"			"136"
 			}
 			"CBaseGrenade::GetDamageRadius()"
 			{
-				"windows"	"241"
-				"linux"		"242"
+				"windows"	"242"
+				"linux"		"243"
 			}
 			"CBasePlayer::Weapon_ShootPosition()"
 			{
-				"windows"	"275"
-				"linux"		"276"
+				"windows"	"276"
+				"linux"		"277"
 			}
 			"CTFBaseRocket::Explode()"
 			{
-				"windows"	"239"
-				"linux"		"240"
+				"windows"	"240"
+				"linux"		"241"
 			}
 			"CTFWeaponBase::GetInitialAfterburnDuration()"
 			{
-				"windows"	"456"
-				"linux"		"463"
+				"windows"	"458"
+				"linux"		"465"
 			}
 			"CTFWeaponBase::GetAfterburnRateOnHit()"
 			{
-				"windows"	"457"
-				"linux"		"464"
+				"windows"	"459"
+				"linux"		"466"
 			}
 			"CTFWeaponBase::InternalGetEffectBarRechargeTime()"
 			{
-				"windows"	"463"
-				"linux"		"470"
+				"windows"	"465"
+				"linux"		"472"
 			}
 			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)"
 			{
-				"windows"	"243"
-				"linux"		"245"
+				"windows"	"244"
+				"linux"		"246"
 			}
 			"CTFWeaponBaseGun::FireJar()"
 			{
-				"windows"	"476"
-				"linux"		"483"
+				"windows"	"478"
+				"linux"		"485"
 			}
 			"CTFWeaponBaseGun::GetProjectileSpeed()"
 			{
-				"windows"	"481"
-				"linux"		"488"
+				"windows"	"483"
+				"linux"		"490"
 			}
 			
 			"CGameTrace::m_pEnt"
