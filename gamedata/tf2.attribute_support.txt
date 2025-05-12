@@ -329,18 +329,18 @@
 			}
 			"CTFWeaponBase::GetInitialAfterburnDuration()"
 			{
-				"windows"	"458"
-				"linux"		"465"
-			}
-			"CTFWeaponBase::GetAfterburnRateOnHit()"
-			{
 				"windows"	"459"
 				"linux"		"466"
 			}
+			"CTFWeaponBase::GetAfterburnRateOnHit()"
+			{
+				"windows"	"460"
+				"linux"		"467"
+			}
 			"CTFWeaponBase::InternalGetEffectBarRechargeTime()"
 			{
-				"windows"	"465"
-				"linux"		"472"
+				"windows"	"466"
+				"linux"		"473"
 			}
 			"CTFWeaponBaseGrenadeProj::InitGrenade(int float)"
 			{
@@ -349,13 +349,13 @@
 			}
 			"CTFWeaponBaseGun::FireJar()"
 			{
-				"windows"	"478"
-				"linux"		"485"
+				"windows"	"479"
+				"linux"		"486"
 			}
 			"CTFWeaponBaseGun::GetProjectileSpeed()"
 			{
-				"windows"	"483"
-				"linux"		"490"
+				"windows"	"484"
+				"linux"		"491"
 			}
 			
 			"CGameTrace::m_pEnt"
