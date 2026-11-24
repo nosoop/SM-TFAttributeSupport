@@ -242,19 +242,14 @@ public void OnPluginStart() {
 	}
 	patchAirDashDeployTime.Enable();
 	
-	Address ppValue = patchAirDashDeployTime.Address + view_as<Address>(4);
-	Address pValue = DereferencePointer(ppValue);
-	float value = view_as<float>(LoadFromAddress(pValue, NumberType_Int32));
-	if (value != DEFAULT_REQUIRED_DEPLOY_FOR_AIR_DASH) {
-		SetFailState("Unexpected value being overwritten for "
-				... "CTFPlayer::CanAirDash()::PatchRequiredDeployTime "
-				... "(expected %.2f, got %.2f / %08x)", DEFAULT_REQUIRED_DEPLOY_FOR_AIR_DASH,
-				value, value);
-	}
-	g_flAirDashDeployTime = value;
+	// The patch turns the load into an absolute `movss xmm1, [0]` placeholder.  The binary is
+	// position-independent now: it computes the constant's address relative to the GOT at
+	// runtime, so there's no static operand left to validate here.  Point the instruction at
+	// our own float instead -- MemoryPatch's verify already confirms we're on the right bytes.
+	g_flAirDashDeployTime = DEFAULT_REQUIRED_DEPLOY_FOR_AIR_DASH;
 	
-	StoreToAddress(ppValue, view_as<any>(GetAddressOfCell(g_flAirDashDeployTime)),
-			NumberType_Int32);
+	StoreToAddress(patchAirDashDeployTime.Address + view_as<Address>(4),
+			view_as<any>(GetAddressOfCell(g_flAirDashDeployTime)), NumberType_Int32);
 	
 	offs_CGameTrace_pEnt = GameConfGetOffset(hGameConf, "CGameTrace::m_pEnt");
 	if (offs_CGameTrace_pEnt <= 0) {

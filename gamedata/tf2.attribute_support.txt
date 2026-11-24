@@ -282,17 +282,18 @@
 				"signature"		"CTFPlayer::CanAirDash()"
 				"linux"
 				{
-					"offset"	"CAh"
-					"verify"	"\xC1\x0F\x2F\x05\x2A\x2A\x2A\x2A"
-					"patch"		"\xC1\x0F\x2F\x05\x00\x00\x00\x00"
+					"offset"	"D2h"
+					"verify"	"\xF3\x0F\x10\x8B\x2A\x2A\x2A\x2A"
+					"patch"		"\xF3\x0F\x10\x0D\x00\x00\x00\x00"
 				}
 				"windows"
 				{
 					"offset"	"A2h"
 					"verify"	"\xF3\x0F\x10\x2A\x2A\x2A\x2A\x2A"
-					"patch"		"\xF3\x0F\x10\x00\x00\x00\x00\x00"
+					"patch"		"\xF3\x0F\x10\x05\x00\x00\x00\x00"
 				}
-				"preserve"	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
+				// bytes 3..7 of the load are rewritten (GOT-relative -> absolute operand)
+				"preserve"	"\xFF\xFF\xFF\x00\x00\x00\x00\x00"
 			}
 		}
 		"Offsets"
